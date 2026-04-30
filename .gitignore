@@ -1,0 +1,15 @@
+# Build
+build/
+
+# Output files
+*.o
+*.exe
+
+# Misc
+.DS_Store
+
+# Project Plan Docs
+docs/project_plan/
+
+# imgui config
+imgui.ini
