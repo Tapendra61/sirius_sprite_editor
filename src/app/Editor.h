@@ -19,6 +19,7 @@
 #include "ui/AutoSliceModal.h"
 #include "ui/ExportModal.h"
 #include "ui/KeybindingsModal.h"
+#include "ui/DocsWindow.h"
 #include "util/Coords.h"
 #include "util/HitTest.h"
 
@@ -84,6 +85,7 @@ public:
     AutoSliceModal   autoModal;
     ExportModal      exportModal;
     KeybindingsModal keybindingsModal;
+    DocsWindow       docsWindow;
 
     Texture2D iconCmd;
     Texture2D iconShift;

@@ -222,7 +222,9 @@ void MainMenu::draw(Editor& editor) {
         popHeaderPad();
         if (helpOpen) {
             pushItemPad();
-            ImGui::MenuItem("(later)", nullptr, false, false);
+            if (ImGui::MenuItem("Documentation")) {
+                editor.docsWindow.show();
+            }
             popItemPad();
             ImGui::EndMenu();
         }

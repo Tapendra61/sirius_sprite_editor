@@ -382,4 +382,5 @@ void Editor::render() {
     autoModal.draw(*this);
     exportModal.draw(*this);
     keybindingsModal.draw(*this);
+    docsWindow.draw();
 }
