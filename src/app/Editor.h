@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "raylib.h"
+#include "app/Keybindings.h"
 #include "app/Project.h"
 #include "commands/CommandStack.h"
 #include "model/Slice.h"
@@ -15,6 +16,7 @@
 #include "ui/GridSliceModal.h"
 #include "ui/AutoSliceModal.h"
 #include "ui/ExportModal.h"
+#include "ui/KeybindingsModal.h"
 #include "util/Coords.h"
 #include "util/HitTest.h"
 
@@ -36,6 +38,7 @@ struct DragState {
     bool marqueeAdditive;
     bool dragHappened;
     int cycleNextId;
+    int hoveredSliceId;
 };
 
 class Editor {
@@ -46,10 +49,19 @@ public:
     void update();
     void render();
 
+    void openProject();
+    void saveProject();
+    void saveProjectAs();
+
+    void zoomTo(float zoom);
+    void zoomFit();
+    void zoomBy(float factor);
+
     Project project;
     CanvasView view;
     CommandStack commands;
     DragState drag;
+    Keybindings keybindings;
     bool shouldExit;
     bool resetLayoutRequested;
 
@@ -59,9 +71,10 @@ public:
     Inspector inspector;
     SliceList sliceList;
     StatusBar statusBar;
-    GridSliceModal gridModal;
-    AutoSliceModal autoModal;
-    ExportModal    exportModal;
+    GridSliceModal   gridModal;
+    AutoSliceModal   autoModal;
+    ExportModal      exportModal;
+    KeybindingsModal keybindingsModal;
 };
 
 #endif

@@ -63,10 +63,19 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(pfd)
 
+# nlohmann/json — for .slicerproj save/load
+FetchContent_Declare(
+    json
+    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+FetchContent_MakeAvailable(json)
+
 # My Binary
 add_executable(sprite_editor
     src/main.cpp
     src/app/Editor.cpp
+    src/app/Keybindings.cpp
     src/app/Project.cpp
     src/model/SliceStore.cpp
     src/ui/MainMenu.cpp
@@ -78,6 +87,7 @@ add_executable(sprite_editor
     src/ui/GridSliceModal.cpp
     src/ui/AutoSliceModal.cpp
     src/ui/ExportModal.cpp
+    src/ui/KeybindingsModal.cpp
     src/ui/Theme.cpp
     src/ui/CanvasDraw.cpp
     src/ui/CanvasInput.cpp
@@ -92,4 +102,4 @@ add_executable(sprite_editor
 target_include_directories(sprite_editor PRIVATE src ${pfd_SOURCE_DIR})
 target_compile_definitions(sprite_editor PRIVATE
     SIRIUS_FONT_PATH="${imgui_SOURCE_DIR}/misc/fonts/Karla-Regular.ttf")
-target_link_libraries(sprite_editor PRIVATE rlimgui)
+target_link_libraries(sprite_editor PRIVATE rlimgui nlohmann_json::nlohmann_json)

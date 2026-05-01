@@ -15,6 +15,8 @@ public:
     bool isImageLoaded() const;
 
     int nextId();
+    int getIdCounter() const { return idCounter; }
+    void setIdCounter(int v) { idCounter = v; }
 
     bool isDirty() const;
     void markDirty();

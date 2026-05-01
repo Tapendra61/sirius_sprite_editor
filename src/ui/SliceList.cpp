@@ -18,24 +18,17 @@ void SliceList::draw(Editor& editor) {
     int total = editor.project.slices.count();
     int selCount = editor.project.slices.selectionCount();
 
-    ImGui::Text("Slices");
-    ImGui::SameLine();
-    ImGui::TextColored(INK_3, "(%d)", total);
-    if (selCount > 0) {
-        ImGui::SameLine();
-        ImGui::TextColored(INK_3, "\xc2\xb7 %d selected", selCount);
-    }
-
-    ImGui::Separator();
-
     if (total == 0) {
-        ImGui::TextWrapped(
-            "No slices yet. Open an image, switch to Rect mode, "
-            "then drag on the canvas to create one. Or use Slice "
-            "\xe2\x86\x92 Grid Slice / Auto Slice for batch creation.");
+        ImGui::TextColored(INK_3, "No Slices Created");
         ImGui::End();
         return;
     }
+
+    ImGui::TextColored(INK_3, "%d slice%s%s%d selected",
+                       total, total == 1 ? "" : "s",
+                       selCount > 0 ? "  \xc2\xb7  " : "  \xc2\xb7  ",
+                       selCount);
+    ImGui::Separator();
 
     ImGuiTableFlags tableFlags = ImGuiTableFlags_RowBg
                                | ImGuiTableFlags_NoBordersInBody

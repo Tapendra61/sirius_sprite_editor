@@ -31,16 +31,29 @@ void drawSliceOutlines(const Editor& editor) {
     float invZoom = 1.0f / editor.view.camera.zoom;
 
     Color unselectedColor = { 176, 171, 189, 160 };  // ink-2 @ 60%
+    Color hoveredColor    = { 220, 220, 230, 220 };  // brighter ink
     Color selectedColor   = { 129, 140, 248, 255 };  // accent-selection #818CF8
+
+    int hoveredId = editor.drag.hoveredSliceId;
 
     const std::vector<Slice>& slices = editor.project.slices.slices;
     for (size_t i = 0; i < slices.size(); ++i) {
         const Slice& s = slices[i];
         bool selected = editor.project.slices.isSelected(s.id);
+        bool hovered  = (s.id == hoveredId) && !selected;
 
-        Color color = selected ? selectedColor : unselectedColor;
-        float thickness = (selected ? 2.0f : 1.0f) * invZoom;
-
+        Color color;
+        float thickness;
+        if (selected) {
+            color = selectedColor;
+            thickness = 2.0f * invZoom;
+        } else if (hovered) {
+            color = hoveredColor;
+            thickness = 1.5f * invZoom;
+        } else {
+            color = unselectedColor;
+            thickness = 1.0f * invZoom;
+        }
         DrawRectangleLinesEx(s.rect, thickness, color);
     }
 }

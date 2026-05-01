@@ -249,8 +249,7 @@ void Inspector::draw(Editor& editor) {
     int selCount = editor.project.slices.selectionCount();
 
     if (selCount == 0) {
-        ImGui::TextColored(INK_3, "No slice selected.");
-        ImGui::TextWrapped("Click a slice on the canvas or in the list.");
+        ImGui::TextColored(INK_3, "No Slice Selected");
         ImGui::End();
         return;
     }

@@ -37,7 +37,19 @@ void MainMenu::draw(Editor& editor) {
 
     if (menuOpen) {
         if (ImGui::BeginMenu("File")) {
-            if (ImGui::MenuItem("Open Image...", "Ctrl+Shift+O")) {
+            if (ImGui::MenuItem("Open Project...", "Ctrl+O")) {
+                editor.openProject();
+            }
+            if (ImGui::MenuItem("Save", "Ctrl+S")) {
+                editor.saveProject();
+            }
+            if (ImGui::MenuItem("Save As...", "Ctrl+Shift+S")) {
+                editor.saveProjectAs();
+            }
+
+            ImGui::Separator();
+
+            if (ImGui::MenuItem("Open Image...", "Ctrl+Shift+I")) {
                 openImageDialog(editor);
             }
 
@@ -63,7 +75,19 @@ void MainMenu::draw(Editor& editor) {
         }
 
         if (ImGui::BeginMenu("Edit")) {
-            ImGui::MenuItem("(phase 3+)", nullptr, false, false);
+            if (ImGui::MenuItem("Undo", "Ctrl+Z", false, editor.commands.canUndo())) {
+                editor.commands.undo(editor.project.slices);
+            }
+            if (ImGui::MenuItem("Redo", "Ctrl+Shift+Z", false, editor.commands.canRedo())) {
+                editor.commands.redo(editor.project.slices);
+            }
+
+            ImGui::Separator();
+
+            if (ImGui::MenuItem("Keybindings...")) {
+                editor.keybindingsModal.open();
+            }
+
             ImGui::EndMenu();
         }
 

@@ -10,6 +10,11 @@
 #include "util/Geometry.h"
 #include "util/HitTest.h"
 
+static bool isSnapModifierDown() {
+    return IsKeyDown(KEY_LEFT_SUPER) || IsKeyDown(KEY_RIGHT_SUPER)
+        || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL);
+}
+
 static bool isAdditiveModifierDown() {
     if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) return true;
     if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) return true;
@@ -152,10 +157,17 @@ static void handleMousePress(Editor& editor) {
 }
 
 static void handleMouseDrag(Editor& editor) {
+    bool snap = isSnapModifierDown();
+
     bool inRectDrag = editor.drag.mode == DragMode::Marquee
                    || editor.drag.mode == DragMode::Creating;
     if (inRectDrag) {
-        editor.drag.marqueeEnd = ScreenToImage(GetMousePosition(), editor.view);
+        Vector2 mouseImg = ScreenToImage(GetMousePosition(), editor.view);
+        if (snap) {
+            mouseImg.x = std::round(mouseImg.x);
+            mouseImg.y = std::round(mouseImg.y);
+        }
+        editor.drag.marqueeEnd = mouseImg;
         return;
     }
 
@@ -164,6 +176,11 @@ static void handleMouseDrag(Editor& editor) {
         Vector2 delta;
         delta.x = mouseImg.x - editor.drag.startImg.x;
         delta.y = mouseImg.y - editor.drag.startImg.y;
+
+        if (snap) {
+            delta.x = std::round(delta.x);
+            delta.y = std::round(delta.y);
+        }
 
         if (!editor.drag.dragHappened) {
             float zoom = editor.view.camera.zoom;
@@ -192,6 +209,12 @@ static void handleMouseDrag(Editor& editor) {
         Vector2 delta;
         delta.x = mouseImg.x - editor.drag.startImg.x;
         delta.y = mouseImg.y - editor.drag.startImg.y;
+
+        if (snap) {
+            delta.x = std::round(delta.x);
+            delta.y = std::round(delta.y);
+        }
+
         for (size_t i = 0; i < editor.drag.snapshot.size(); ++i) {
             if (editor.drag.snapshot[i].id != editor.drag.activeSliceId) continue;
             const Slice& orig = editor.drag.snapshot[i];
@@ -312,9 +335,48 @@ static void handleMouseRelease(Editor& editor) {
     editor.drag.cycleNextId = -1;
 }
 
+static void applyHoverCursor(HandleId handle, bool bodySelected) {
+    switch (handle) {
+        case HandleId::NW:
+        case HandleId::SE:
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNWSE); break;
+        case HandleId::NE:
+        case HandleId::SW:
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNESW); break;
+        case HandleId::N:
+        case HandleId::S:
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);   break;
+        case HandleId::E:
+        case HandleId::W:
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);   break;
+        case HandleId::Body:
+            if (bodySelected) ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            break;
+        default:
+            break;
+    }
+}
+
 void handleCanvasMouse(Editor& editor, bool canvasHovered) {
-    // Move mode hijacks LMB for panning — suppress selection / drag interactions.
-    if (editor.toolbar.mode == ToolMode::Move) return;
+    if (editor.toolbar.mode == ToolMode::Move) {
+        editor.drag.hoveredSliceId = -1;
+        return;
+    }
+
+    // Hover-only pickHit each frame for cursor + highlight (skip while actively dragging)
+    bool isDragging = editor.drag.mode == DragMode::Moving
+                   || editor.drag.mode == DragMode::Resizing
+                   || editor.drag.mode == DragMode::Marquee
+                   || editor.drag.mode == DragMode::Creating;
+    if (canvasHovered && !isDragging) {
+        Hit hover = pickHit(GetMousePosition(), editor.project.slices, editor.view);
+        editor.drag.hoveredSliceId = hover.sliceId;
+        bool bodySelected = hover.sliceId != -1 &&
+                            editor.project.slices.isSelected(hover.sliceId);
+        applyHoverCursor(hover.handle, bodySelected);
+    } else if (!canvasHovered) {
+        editor.drag.hoveredSliceId = -1;
+    }
 
     if (canvasHovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         handleMousePress(editor);

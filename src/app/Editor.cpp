@@ -1,9 +1,15 @@
 #include "app/Editor.h"
 
+#include <cstdio>
+#include <filesystem>
 #include <memory>
+#include <string>
+#include <vector>
 #include "commands/SliceCommands.h"
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "ops/Importer.h"
+#include "portable-file-dialogs.h"
 
 static void buildDefaultLayout(ImGuiID dockId) {
     ImGui::DockBuilderRemoveNode(dockId);
@@ -40,12 +46,30 @@ Editor::Editor() : shouldExit(false), resetLayoutRequested(false) {
     drag.marqueeAdditive = false;
     drag.dragHappened = false;
     drag.cycleNextId = -1;
+    drag.hoveredSliceId = -1;
 }
 
 Editor::~Editor() {
 }
 
+static void updateWindowTitle(const Project& project) {
+    char title[512];
+    const char* dirty = project.isDirty() ? "*" : "";
+    if (project.projectPath.empty()) {
+        std::snprintf(title, sizeof(title),
+                      "untitled%s \xe2\x80\x94 Sirius Sprite Editor", dirty);
+    } else {
+        std::filesystem::path p(project.projectPath);
+        std::snprintf(title, sizeof(title),
+                      "%s%s \xe2\x80\x94 Sirius Sprite Editor",
+                      p.filename().string().c_str(), dirty);
+    }
+    SetWindowTitle(title);
+}
+
 void Editor::update() {
+    updateWindowTitle(project);
+
     if (IsFileDropped()) {
         FilePathList dropped = LoadDroppedFiles();
         TraceLog(LOG_INFO, "drag-drop: %u file(s)", dropped.count);
@@ -61,20 +85,59 @@ void Editor::update() {
         UnloadDroppedFiles(dropped);
     }
 
-    if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_Z)) {
-        commands.undo(project.slices);
+    // While the keybindings modal is recording a chord, swallow all shortcuts
+    // so the new chord doesn't also fire its previous binding.
+    if (keybindingsModal.isRecording()) return;
+
+    // File
+    if (keybindings.isPressed(Action::OpenProject))   openProject();
+    if (keybindings.isPressed(Action::SaveProjectAs)) saveProjectAs();
+    else if (keybindings.isPressed(Action::SaveProject)) saveProject();
+    if (keybindings.isPressed(Action::OpenImage)) {
+        std::vector<std::string> filters = {
+            "Image Files", "*.png *.jpg *.jpeg *.bmp *.tga *.gif",
+            "All Files", "*"
+        };
+        std::vector<std::string> sel = pfd::open_file(
+            "Open Image", "", filters, pfd::opt::none).result();
+        if (!sel.empty()) {
+            if (project.loadImage(sel[0])) {
+                view.camera.target = { 0.0f, 0.0f };
+                view.camera.zoom = 1.0f;
+            }
+        }
     }
-    if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_Z)) {
-        commands.redo(project.slices);
+    if (keybindings.isPressed(Action::Quit)) shouldExit = true;
+
+    // Slice / Export
+    if (keybindings.isPressed(Action::Export) && project.slices.count() > 0) {
+        exportModal.open();
     }
-    if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_Y)) {
-        commands.redo(project.slices);
+    if (keybindings.isPressed(Action::GridSlice) && project.isImageLoaded()) {
+        gridModal.open();
     }
+    if (keybindings.isPressed(Action::AutoSlice) && project.isImageLoaded()) {
+        autoModal.open();
+    }
+
+    // Zoom
+    if (keybindings.isPressed(Action::ZoomActual)) zoomTo(1.0f);
+    if (keybindings.isPressed(Action::ZoomFit))    zoomFit();
+    if (keybindings.isPressed(Action::ZoomIn))     zoomBy(1.1f);
+    if (keybindings.isPressed(Action::ZoomOut))    zoomBy(1.0f / 1.1f);
+
+    // Tools
+    if (keybindings.isPressed(Action::ToolSelect)) toolbar.mode = ToolMode::Select;
+    if (keybindings.isPressed(Action::ToolMove))   toolbar.mode = ToolMode::Move;
+    if (keybindings.isPressed(Action::ToolRect))   toolbar.mode = ToolMode::Rectangle;
+
+    // Edit / undo
+    if (keybindings.isPressed(Action::Undo)) commands.undo(project.slices);
+    if (keybindings.isPressed(Action::Redo)) commands.redo(project.slices);
 
     bool hasSelection = !project.slices.selectedIds.empty();
 
-    if (hasSelection && (ImGui::IsKeyPressed(ImGuiKey_Delete) ||
-                         ImGui::IsKeyPressed(ImGuiKey_Backspace))) {
+    if (hasSelection && keybindings.isPressed(Action::Delete)) {
         std::vector<Slice> deleted;
         for (size_t i = 0; i < project.slices.selectedIds.size(); ++i) {
             const Slice* s = project.slices.find(project.slices.selectedIds[i]);
@@ -89,7 +152,7 @@ void Editor::update() {
         }
     }
 
-    if (hasSelection && ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_D)) {
+    if (hasSelection && keybindings.isPressed(Action::Duplicate)) {
         std::vector<Slice> before = project.slices.slices;
         std::vector<Slice> after = before;
         std::vector<int> newIds;
@@ -115,15 +178,98 @@ void Editor::update() {
         }
     }
 
-    if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_A)) {
+    if (keybindings.isPressed(Action::SelectAll)) {
         project.slices.selectClear();
         for (size_t i = 0; i < project.slices.slices.size(); ++i) {
             project.slices.selectAdd(project.slices.slices[i].id);
         }
     }
 
-    if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+    if (keybindings.isPressed(Action::Deselect)) {
         project.slices.selectClear();
+    }
+}
+
+static std::vector<std::string> projectFilters() {
+    return {
+        "Sirius Project (*.srsprite)", "*.srsprite",
+        "All Files", "*"
+    };
+}
+
+void Editor::openProject() {
+    std::vector<std::string> picks = pfd::open_file(
+        "Open Project", "", projectFilters(), pfd::opt::none).result();
+    if (picks.empty()) return;
+
+    if (Importer::loadProject(project, view, picks[0])) {
+        commands.clear();
+        drag.mode = DragMode::Idle;
+        drag.snapshot.clear();
+    }
+}
+
+void Editor::saveProject() {
+    if (project.projectPath.empty()) {
+        saveProjectAs();
+        return;
+    }
+    if (Importer::saveProject(project, view, project.projectPath)) {
+        project.clearDirty();
+    }
+}
+
+void Editor::zoomTo(float zoom) {
+    view.camera.zoom = zoom;
+    view.camera.target = { 0.0f, 0.0f };
+}
+
+void Editor::zoomFit() {
+    if (!project.isImageLoaded()) {
+        zoomTo(1.0f);
+        return;
+    }
+    float panelW = view.panelBounds.width;
+    float panelH = view.panelBounds.height;
+    if (panelW < 1.0f || panelH < 1.0f) return;
+
+    float imgW = (float)project.image.width;
+    float imgH = (float)project.image.height;
+    float zx = panelW / imgW;
+    float zy = panelH / imgH;
+    float fit = (zx < zy ? zx : zy) * 0.95f;
+    if (fit < 0.1f)  fit = 0.1f;
+    if (fit > 64.0f) fit = 64.0f;
+
+    view.camera.zoom = fit;
+    view.camera.target.x = imgW * 0.5f - panelW / (2.0f * fit);
+    view.camera.target.y = imgH * 0.5f - panelH / (2.0f * fit);
+}
+
+void Editor::zoomBy(float factor) {
+    float newZoom = view.camera.zoom * factor;
+    if (newZoom < 0.1f)  newZoom = 0.1f;
+    if (newZoom > 64.0f) newZoom = 64.0f;
+
+    float panelW = view.panelBounds.width;
+    float panelH = view.panelBounds.height;
+    Vector2 centerScreen = { panelW * 0.5f, panelH * 0.5f };
+    Vector2 worldBefore = GetScreenToWorld2D(centerScreen, view.camera);
+    view.camera.zoom = newZoom;
+    Vector2 worldAfter = GetScreenToWorld2D(centerScreen, view.camera);
+    view.camera.target.x += worldBefore.x - worldAfter.x;
+    view.camera.target.y += worldBefore.y - worldAfter.y;
+}
+
+void Editor::saveProjectAs() {
+    std::string path = pfd::save_file(
+        "Save Project As", "untitled.srsprite",
+        projectFilters(), pfd::opt::none).result();
+    if (path.empty()) return;
+
+    if (Importer::saveProject(project, view, path)) {
+        project.projectPath = path;
+        project.clearDirty();
     }
 }
 
@@ -156,4 +302,5 @@ void Editor::render() {
     gridModal.draw(*this);
     autoModal.draw(*this);
     exportModal.draw(*this);
+    keybindingsModal.draw(*this);
 }
