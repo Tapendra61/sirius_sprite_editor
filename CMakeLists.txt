@@ -101,5 +101,6 @@ add_executable(sprite_editor
 )
 target_include_directories(sprite_editor PRIVATE src ${pfd_SOURCE_DIR})
 target_compile_definitions(sprite_editor PRIVATE
-    SIRIUS_FONT_PATH="${imgui_SOURCE_DIR}/misc/fonts/Karla-Regular.ttf")
+    SIRIUS_FONT_DMSANS="${CMAKE_CURRENT_SOURCE_DIR}/resources/fonts/DM_Sans/static/DMSans-Regular.ttf"
+    SIRIUS_FONT_MONO="${CMAKE_CURRENT_SOURCE_DIR}/resources/fonts/JetBrains_Mono/static/JetBrainsMono-Regular.ttf")
 target_link_libraries(sprite_editor PRIVATE rlimgui nlohmann_json::nlohmann_json)

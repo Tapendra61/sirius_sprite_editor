@@ -47,9 +47,25 @@ Editor::Editor() : shouldExit(false), resetLayoutRequested(false) {
     drag.dragHappened = false;
     drag.cycleNextId = -1;
     drag.hoveredSliceId = -1;
+
+    iconCmd        = LoadTexture("resources/icons/command-key.png");
+    iconShift      = LoadTexture("resources/icons/shift-key.png");
+    iconToolSelect = LoadTexture("resources/icons/selection-tool.png");
+    iconToolMove   = LoadTexture("resources/icons/move-tool.png");
+    iconToolRect   = LoadTexture("resources/icons/rect-tool.png");
+    if (iconCmd.id != 0)        SetTextureFilter(iconCmd,        TEXTURE_FILTER_BILINEAR);
+    if (iconShift.id != 0)      SetTextureFilter(iconShift,      TEXTURE_FILTER_BILINEAR);
+    if (iconToolSelect.id != 0) SetTextureFilter(iconToolSelect, TEXTURE_FILTER_BILINEAR);
+    if (iconToolMove.id != 0)   SetTextureFilter(iconToolMove,   TEXTURE_FILTER_BILINEAR);
+    if (iconToolRect.id != 0)   SetTextureFilter(iconToolRect,   TEXTURE_FILTER_BILINEAR);
 }
 
 Editor::~Editor() {
+    if (iconCmd.id != 0)        UnloadTexture(iconCmd);
+    if (iconShift.id != 0)      UnloadTexture(iconShift);
+    if (iconToolSelect.id != 0) UnloadTexture(iconToolSelect);
+    if (iconToolMove.id != 0)   UnloadTexture(iconToolMove);
+    if (iconToolRect.id != 0)   UnloadTexture(iconToolRect);
 }
 
 static void updateWindowTitle(const Project& project) {

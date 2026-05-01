@@ -5,6 +5,7 @@
 #include <memory>
 #include "app/Editor.h"
 #include "commands/SliceCommands.h"
+#include "ui/Theme.h"
 #include "imgui.h"
 
 Inspector::Inspector() : wasActive(false), hasSnapshot(false) {
@@ -63,7 +64,9 @@ static bool intCell(const char* label, const char* id, int* val,
     ImGui::TextColored(INK_3, "%s", label);
     ImGui::SameLine(0.0f, 6.0f);
     ImGui::PushItemWidth(w);
+    if (g_FontMono) ImGui::PushFont(g_FontMono);
     bool changed = ImGui::DragInt(id, val, 0.5f, 0, 0, mixed ? "\xe2\x80\x94" : "%d");
+    if (g_FontMono) ImGui::PopFont();
     ImGui::PopItemWidth();
     if (ImGui::IsItemActive()) anyActive = true;
     return changed;
@@ -75,8 +78,10 @@ static bool floatCell(const char* label, const char* id, float* val,
     ImGui::TextColored(INK_3, "%s", label);
     ImGui::SameLine(0.0f, 6.0f);
     ImGui::PushItemWidth(w);
+    if (g_FontMono) ImGui::PushFont(g_FontMono);
     bool changed = ImGui::DragFloat(id, val, 0.01f, 0.0f, 1.0f,
                                     mixed ? "\xe2\x80\x94" : "%.2f");
+    if (g_FontMono) ImGui::PopFont();
     ImGui::PopItemWidth();
     if (ImGui::IsItemActive()) anyActive = true;
     return changed;
@@ -115,7 +120,9 @@ static void drawIdentity(const std::vector<Slice*>& sel, bool& anyActive) {
     ImGui::TextColored(INK_3, "ID");
     ImGui::SameLine(0.0f, 8.0f);
     if (sel.size() == 1) {
+        if (g_FontMono) ImGui::PushFont(g_FontMono);
         ImGui::Text("#%d", sel[0]->id);
+        if (g_FontMono) ImGui::PopFont();
     } else {
         ImGui::TextColored(INK_3, "(multiple)");
     }

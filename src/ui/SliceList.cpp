@@ -2,6 +2,7 @@
 
 #include <cstdio>
 #include "app/Editor.h"
+#include "ui/Theme.h"
 #include "imgui.h"
 
 SliceList::SliceList() {
@@ -61,8 +62,10 @@ void SliceList::draw(Editor& editor) {
             }
 
             ImGui::TableSetColumnIndex(1);
+            if (g_FontMono) ImGui::PushFont(g_FontMono);
             ImGui::TextColored(INK_3, "%d\xc3\x97%d",
                                (int)s.rect.width, (int)s.rect.height);
+            if (g_FontMono) ImGui::PopFont();
         }
 
         ImGui::EndTable();

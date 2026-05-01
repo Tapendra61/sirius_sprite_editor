@@ -75,6 +75,12 @@ public:
     AutoSliceModal   autoModal;
     ExportModal      exportModal;
     KeybindingsModal keybindingsModal;
+
+    Texture2D iconCmd;
+    Texture2D iconShift;
+    Texture2D iconToolSelect;
+    Texture2D iconToolMove;
+    Texture2D iconToolRect;
 };
 
 #endif

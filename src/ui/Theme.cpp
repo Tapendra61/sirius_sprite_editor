@@ -1,6 +1,7 @@
 #include "ui/Theme.h"
 
 #include "imgui.h"
+#include "raylib.h"
 
 static ImVec4 RGB(int r, int g, int b, int a) {
     ImVec4 c;
@@ -11,22 +12,35 @@ static ImVec4 RGB(int r, int g, int b, int a) {
     return c;
 }
 
+ImFont* g_FontMain = nullptr;
+ImFont* g_FontMono = nullptr;
+
 void LoadFonts() {
     ImGuiIO& io = ImGui::GetIO();
+
+    Vector2 dpi = GetWindowScaleDPI();
+    float density = dpi.x > 1.0f ? dpi.x : 1.0f;
 
     ImFontConfig cfg;
     cfg.OversampleH = 2;
     cfg.OversampleV = 2;
-    cfg.PixelSnapH = false;
+    cfg.PixelSnapH = true;
+    cfg.RasterizerDensity = density;
 
-    ImFont* font = nullptr;
-#ifdef SIRIUS_FONT_PATH
-    font = io.Fonts->AddFontFromFileTTF(SIRIUS_FONT_PATH, 13.0f, &cfg);
+#ifdef SIRIUS_FONT_DMSANS
+    g_FontMain = io.Fonts->AddFontFromFileTTF(SIRIUS_FONT_DMSANS, 19.0f, &cfg);
+#endif
+#ifdef SIRIUS_FONT_MONO
+    g_FontMono = io.Fonts->AddFontFromFileTTF(SIRIUS_FONT_MONO, 17.0f, &cfg);
 #endif
 
-    if (font == nullptr) {
-        io.Fonts->AddFontDefault();
+    if (g_FontMain == nullptr) {
+        g_FontMain = io.Fonts->AddFontDefault();
     }
+
+    // rlImGuiBeginInitImGui() adds the Proggy default font as Fonts[0] before
+    // we load ours. Override the default so DM Sans is used everywhere.
+    io.FontDefault = g_FontMain;
 }
 
 void ApplyDarkTheme() {

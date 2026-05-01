@@ -6,7 +6,7 @@
 #include "ui/Theme.h"
 
 int main() {
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
     InitWindow(1280, 720, "Sirius Sprite Editor");
     SetTargetFPS(60);
 

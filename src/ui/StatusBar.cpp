@@ -1,6 +1,7 @@
 #include "ui/StatusBar.h"
 
 #include "app/Editor.h"
+#include "ui/Theme.h"
 #include "util/Coords.h"
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -35,6 +36,8 @@ void StatusBar::draw(Editor& editor) {
         ImGui::End();
         return;
     }
+
+    if (g_FontMono) ImGui::PushFont(g_FontMono);
 
     // Zoom
     ImGui::TextColored(INK_2, "Zoom");
@@ -107,6 +110,8 @@ void StatusBar::draw(Editor& editor) {
         ImGui::SameLine(regionRight - dotSize.x);
         ImGui::TextColored(PIVOT, "%s", dot);
     }
+
+    if (g_FontMono) ImGui::PopFont();
 
     ImGui::End();
 }
