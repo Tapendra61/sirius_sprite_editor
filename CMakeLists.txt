@@ -18,11 +18,11 @@ set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(raylib)
 
-# Imgui
+# Imgui (docking branch — needed for ImGuiConfigFlags_DockingEnable)
 FetchContent_Declare(
     imgui
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG v1.92.7
+    GIT_TAG docking
     GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(imgui)
@@ -51,6 +51,44 @@ add_library(rlimgui STATIC ${rlimgui_SOURCE_DIR}/rlImGui.cpp)
 target_include_directories(rlimgui PUBLIC ${rlimgui_SOURCE_DIR})
 target_link_libraries(rlimgui PUBLIC raylib imgui)
 
+# portable-file-dialogs (single header, native open/save dialogs)
+# SOURCE_SUBDIR set to a nonexistent path so we skip pfd's stale CMakeLists.
+# We just want the header file, not their build config.
+FetchContent_Declare(
+    pfd
+    GIT_REPOSITORY https://github.com/samhocevar/portable-file-dialogs.git
+    GIT_TAG main
+    GIT_SHALLOW TRUE
+    SOURCE_SUBDIR _none_
+)
+FetchContent_MakeAvailable(pfd)
+
 # My Binary
-add_executable(sprite_editor src/main.cpp)
+add_executable(sprite_editor
+    src/main.cpp
+    src/app/Editor.cpp
+    src/app/Project.cpp
+    src/model/SliceStore.cpp
+    src/ui/MainMenu.cpp
+    src/ui/Toolbar.cpp
+    src/ui/Canvas.cpp
+    src/ui/Inspector.cpp
+    src/ui/SliceList.cpp
+    src/ui/StatusBar.cpp
+    src/ui/GridSliceModal.cpp
+    src/ui/AutoSliceModal.cpp
+    src/ui/Theme.cpp
+    src/ui/CanvasDraw.cpp
+    src/ui/CanvasInput.cpp
+    src/ops/GridSlicer.cpp
+    src/ops/AutoSlicer.cpp
+    src/ops/Exporter.cpp
+    src/ops/Importer.cpp
+    src/commands/CommandStack.cpp
+    src/commands/SliceCommands.cpp
+    src/util/HitTest.cpp
+)
+target_include_directories(sprite_editor PRIVATE src ${pfd_SOURCE_DIR})
+target_compile_definitions(sprite_editor PRIVATE
+    SIRIUS_FONT_PATH="${imgui_SOURCE_DIR}/misc/fonts/Cousine-Regular.ttf")
 target_link_libraries(sprite_editor PRIVATE rlimgui)

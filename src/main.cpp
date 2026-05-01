@@ -1,29 +1,41 @@
-#include <iostream>
-
 #include "raylib.h"
 #include "imgui.h"
 #include "rlImGui.h"
 
-int main() {
-    std::cout << "Sirius Sprite Editor!" << std::endl;
+#include "app/Editor.h"
+#include "ui/Theme.h"
 
+int main() {
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(1280, 720, "Sirius Sprite Editor");
     SetTargetFPS(60);
 
-    rlImGuiSetup(true);
+    rlImGuiBeginInitImGui();
+    LoadFonts();
+    rlImGuiEndInitImGui();
 
-    while(!WindowShouldClose()) {
-        BeginDrawing();
-        ClearBackground(WHITE);
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-        rlImGuiBegin();
-        ImGui::ShowDemoWindow();
-        rlImGuiEnd();
+    ApplyDarkTheme();
 
-        EndDrawing();
+    {
+        Editor editor;
+
+        while (!WindowShouldClose() && !editor.shouldExit) {
+            BeginDrawing();
+            ClearBackground(DARKGRAY);
+
+            rlImGuiBegin();
+            editor.update();
+            editor.render();
+            rlImGuiEnd();
+
+            EndDrawing();
+        }
     }
 
-    ImGui::DestroyContext();
+    rlImGuiShutdown();
     CloseWindow();
     return 0;
 }
