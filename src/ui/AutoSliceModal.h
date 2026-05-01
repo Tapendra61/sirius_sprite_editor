@@ -30,6 +30,7 @@ private:
 
     bool needsRecompute;
     std::vector<Rectangle> cachedRects;
+    char namePattern[128];
 };
 
 #endif

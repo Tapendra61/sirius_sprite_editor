@@ -5,6 +5,7 @@
 #include "rlImGui.h"
 #include "ui/CanvasDraw.h"
 #include "ui/CanvasInput.h"
+#include "util/HitTest.h"
 
 Canvas::Canvas() : rt{}, rtWidth(0), rtHeight(0) {
 }
@@ -82,6 +83,31 @@ void Canvas::draw(Editor& editor) {
 
     handleCanvasMouse(editor, canvasHovered);
     handleCanvasPanZoom(editor, canvasHovered);
+
+    // Right-click context menu: pre-select slice under cursor, then open popup.
+    if (canvasHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+        Hit hit = pickHit(GetMousePosition(), editor.project.slices, editor.view);
+        if (hit.sliceId != -1 && !editor.project.slices.isSelected(hit.sliceId)) {
+            editor.project.slices.selectOnly(hit.sliceId);
+        }
+        ImGui::OpenPopup("##canvas_ctx");
+    }
+
+    if (ImGui::BeginPopup("##canvas_ctx")) {
+        bool hasSelection = editor.project.slices.selectionCount() > 0;
+        if (ImGui::MenuItem("Duplicate", "Ctrl+D", false, hasSelection)) {
+            editor.duplicateSelected();
+        }
+        if (ImGui::MenuItem("Trim Transparent Edges", nullptr, false,
+                            hasSelection && editor.project.isImageLoaded())) {
+            editor.trimSelected();
+        }
+        ImGui::Separator();
+        if (ImGui::MenuItem("Delete", "Del", false, hasSelection)) {
+            editor.deleteSelected();
+        }
+        ImGui::EndPopup();
+    }
 
     ImGui::End();
 }

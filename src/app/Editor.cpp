@@ -9,6 +9,7 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "ops/Importer.h"
+#include "ops/Trim.h"
 #include "portable-file-dialogs.h"
 
 static void buildDefaultLayout(ImGuiID dockId) {
@@ -154,44 +155,11 @@ void Editor::update() {
     bool hasSelection = !project.slices.selectedIds.empty();
 
     if (hasSelection && keybindings.isPressed(Action::Delete)) {
-        std::vector<Slice> deleted;
-        for (size_t i = 0; i < project.slices.selectedIds.size(); ++i) {
-            const Slice* s = project.slices.find(project.slices.selectedIds[i]);
-            if (s != nullptr) {
-                deleted.push_back(*s);
-            }
-        }
-        if (!deleted.empty()) {
-            std::unique_ptr<DeleteSlicesCommand> cmd(new DeleteSlicesCommand(deleted));
-            commands.push(std::move(cmd), project.slices);
-            project.markDirty();
-        }
+        deleteSelected();
     }
 
     if (hasSelection && keybindings.isPressed(Action::Duplicate)) {
-        std::vector<Slice> before = project.slices.slices;
-        std::vector<Slice> after = before;
-        std::vector<int> newIds;
-        for (size_t i = 0; i < project.slices.selectedIds.size(); ++i) {
-            const Slice* s = project.slices.find(project.slices.selectedIds[i]);
-            if (s == nullptr) continue;
-            Slice copy = *s;
-            copy.id = project.nextId();
-            copy.rect.x += 8.0f;
-            copy.rect.y += 8.0f;
-            copy.name = std::string("slice_") + std::to_string(copy.id);
-            after.push_back(copy);
-            newIds.push_back(copy.id);
-        }
-        if (!newIds.empty()) {
-            std::unique_ptr<ReplaceAllCommand> cmd(new ReplaceAllCommand(before, after));
-            commands.push(std::move(cmd), project.slices);
-            project.slices.selectClear();
-            for (size_t i = 0; i < newIds.size(); ++i) {
-                project.slices.selectAdd(newIds[i]);
-            }
-            project.markDirty();
-        }
+        duplicateSelected();
     }
 
     if (keybindings.isPressed(Action::SelectAll)) {
@@ -217,11 +185,18 @@ void Editor::openProject() {
     std::vector<std::string> picks = pfd::open_file(
         "Open Project", "", projectFilters(), pfd::opt::none).result();
     if (picks.empty()) return;
+    openProjectPath(picks[0]);
+}
 
-    if (Importer::loadProject(project, view, picks[0])) {
+void Editor::openProjectPath(const std::string& path) {
+    if (path.empty()) return;
+    if (Importer::loadProject(project, view, path)) {
         commands.clear();
         drag.mode = DragMode::Idle;
         drag.snapshot.clear();
+        recentFiles.add(path);
+    } else {
+        recentFiles.remove(path);
     }
 }
 
@@ -232,6 +207,7 @@ void Editor::saveProject() {
     }
     if (Importer::saveProject(project, view, project.projectPath)) {
         project.clearDirty();
+        recentFiles.add(project.projectPath);
     }
 }
 
@@ -262,6 +238,92 @@ void Editor::zoomFit() {
     view.camera.target.y = imgH * 0.5f - panelH / (2.0f * fit);
 }
 
+void Editor::deleteSelected() {
+    if (project.slices.selectedIds.empty()) return;
+
+    std::vector<Slice> deleted;
+    for (size_t i = 0; i < project.slices.selectedIds.size(); ++i) {
+        const Slice* s = project.slices.find(project.slices.selectedIds[i]);
+        if (s != nullptr) deleted.push_back(*s);
+    }
+    if (deleted.empty()) return;
+
+    std::unique_ptr<DeleteSlicesCommand> cmd(new DeleteSlicesCommand(deleted));
+    commands.push(std::move(cmd), project.slices);
+    project.markDirty();
+}
+
+void Editor::duplicateSelected() {
+    if (project.slices.selectedIds.empty()) return;
+
+    std::vector<Slice> before = project.slices.slices;
+    std::vector<Slice> after = before;
+    std::vector<int> newIds;
+    for (size_t i = 0; i < project.slices.selectedIds.size(); ++i) {
+        const Slice* s = project.slices.find(project.slices.selectedIds[i]);
+        if (s == nullptr) continue;
+        Slice copy = *s;
+        copy.id = project.nextId();
+        copy.rect.x += 8.0f;
+        copy.rect.y += 8.0f;
+        copy.name = std::string("slice_") + std::to_string(copy.id);
+        after.push_back(copy);
+        newIds.push_back(copy.id);
+    }
+    if (newIds.empty()) return;
+
+    std::unique_ptr<ReplaceAllCommand> cmd(new ReplaceAllCommand(before, after));
+    commands.push(std::move(cmd), project.slices);
+    project.slices.selectClear();
+    for (size_t i = 0; i < newIds.size(); ++i) {
+        project.slices.selectAdd(newIds[i]);
+    }
+    project.markDirty();
+}
+
+void Editor::trimSelected() {
+    if (project.slices.selectedIds.empty()) return;
+    if (!project.isImageLoaded()) return;
+
+    std::vector<Slice> before;
+    std::vector<Slice> after;
+    for (size_t i = 0; i < project.slices.selectedIds.size(); ++i) {
+        const Slice* s = project.slices.find(project.slices.selectedIds[i]);
+        if (s == nullptr) continue;
+        Rectangle trimmed = trimTransparentEdges(project.image, s->rect, 0);
+        if (trimmed.x == s->rect.x && trimmed.y == s->rect.y &&
+            trimmed.width == s->rect.width && trimmed.height == s->rect.height) {
+            continue;
+        }
+        before.push_back(*s);
+        Slice updated = *s;
+        updated.rect = trimmed;
+        after.push_back(updated);
+    }
+    if (before.empty()) return;
+
+    std::unique_ptr<EditSlicesCommand> cmd(new EditSlicesCommand(before, after));
+    commands.push(std::move(cmd), project.slices);
+    project.markDirty();
+}
+
+void Editor::renameSlice(int sliceId, const std::string& newName) {
+    const Slice* current = project.slices.find(sliceId);
+    if (current == nullptr) return;
+    if (current->name == newName) return;
+
+    std::vector<Slice> before;
+    before.push_back(*current);
+    Slice updated = *current;
+    updated.name = newName;
+    std::vector<Slice> after;
+    after.push_back(updated);
+
+    std::unique_ptr<EditSlicesCommand> cmd(new EditSlicesCommand(before, after));
+    commands.push(std::move(cmd), project.slices);
+    project.markDirty();
+}
+
 void Editor::zoomBy(float factor) {
     float newZoom = view.camera.zoom * factor;
     if (newZoom < 0.1f)  newZoom = 0.1f;
@@ -286,6 +348,7 @@ void Editor::saveProjectAs() {
     if (Importer::saveProject(project, view, path)) {
         project.projectPath = path;
         project.clearDirty();
+        recentFiles.add(path);
     }
 }
 

@@ -77,6 +77,7 @@ add_executable(sprite_editor
     src/app/Editor.cpp
     src/app/Keybindings.cpp
     src/app/Project.cpp
+    src/app/RecentFiles.cpp
     src/model/SliceStore.cpp
     src/ui/MainMenu.cpp
     src/ui/Toolbar.cpp
@@ -95,6 +96,7 @@ add_executable(sprite_editor
     src/ops/AutoSlicer.cpp
     src/ops/Exporter.cpp
     src/ops/Importer.cpp
+    src/ops/Trim.cpp
     src/commands/CommandStack.cpp
     src/commands/SliceCommands.cpp
     src/util/HitTest.cpp

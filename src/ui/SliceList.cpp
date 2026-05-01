@@ -1,9 +1,11 @@
 #include "ui/SliceList.h"
 
 #include <cstdio>
+#include <cstring>
 #include "app/Editor.h"
 #include "ui/Theme.h"
 #include "imgui.h"
+#include "rlImGui.h"
 
 SliceList::SliceList() {
 }
@@ -35,9 +37,13 @@ void SliceList::draw(Editor& editor) {
                                | ImGuiTableFlags_NoBordersInBody
                                | ImGuiTableFlags_ScrollY;
 
-    if (ImGui::BeginTable("##slicelist", 2, tableFlags)) {
-        ImGui::TableSetupColumn("##name", ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableSetupColumn("##size", ImGuiTableColumnFlags_WidthFixed, 56.0f);
+    const float kThumbBox = 32.0f;
+    bool hasImage = editor.project.isImageLoaded();
+
+    if (ImGui::BeginTable("##slicelist", 3, tableFlags)) {
+        ImGui::TableSetupColumn("##thumb", ImGuiTableColumnFlags_WidthFixed, kThumbBox + 4.0f);
+        ImGui::TableSetupColumn("##name",  ImGuiTableColumnFlags_WidthStretch);
+        ImGui::TableSetupColumn("##size",  ImGuiTableColumnFlags_WidthFixed, 56.0f);
 
         const std::vector<Slice>& slices = editor.project.slices.slices;
         for (size_t i = 0; i < slices.size(); ++i) {
@@ -45,27 +51,107 @@ void SliceList::draw(Editor& editor) {
             bool sel = editor.project.slices.isSelected(s.id);
 
             ImGui::TableNextRow();
+
+            // Col 0: thumbnail
             ImGui::TableSetColumnIndex(0);
+            if (hasImage && s.rect.width > 0 && s.rect.height > 0) {
+                float ar = s.rect.width / s.rect.height;
+                float dw = kThumbBox, dh = kThumbBox;
+                if (ar > 1.0f) dh = kThumbBox / ar;
+                else           dw = kThumbBox * ar;
+                float padTop = (kThumbBox - dh) * 0.5f;
+                float padLeft = (kThumbBox - dw) * 0.5f;
+                ImVec2 cur = ImGui::GetCursorPos();
+                ImGui::SetCursorPos(ImVec2(cur.x + padLeft, cur.y + padTop));
+                rlImGuiImageRect(&editor.project.texture, (int)dw, (int)dh, s.rect);
+                ImGui::SetCursorPos(ImVec2(cur.x, cur.y + kThumbBox));
+            } else {
+                ImGui::Dummy(ImVec2(kThumbBox, kThumbBox));
+            }
 
-            char label[256];
-            std::snprintf(label, sizeof(label), "%s##sl%d", s.name.c_str(), s.id);
+            // Col 1: name / rename / selectable
+            ImGui::TableSetColumnIndex(1);
 
-            if (ImGui::Selectable(label, sel, ImGuiSelectableFlags_SpanAllColumns)) {
-                ImGuiIO& io = ImGui::GetIO();
-                bool additive = io.KeyShift || io.KeyCtrl || io.KeySuper;
-                if (additive) {
-                    if (sel) editor.project.slices.selectRemove(s.id);
-                    else     editor.project.slices.selectAdd(s.id);
-                } else {
-                    editor.project.slices.selectOnly(s.id);
+            if (renamingId == s.id) {
+                char inputId[32];
+                std::snprintf(inputId, sizeof(inputId), "##rename%d", s.id);
+                if (renameFocusPending) {
+                    ImGui::SetKeyboardFocusHere();
+                    renameFocusPending = false;
+                }
+                ImGui::PushItemWidth(-1.0f);
+                bool submit = ImGui::InputText(inputId, renameBuffer, sizeof(renameBuffer),
+                                               ImGuiInputTextFlags_EnterReturnsTrue
+                                               | ImGuiInputTextFlags_AutoSelectAll);
+                ImGui::PopItemWidth();
+                bool deactivated = ImGui::IsItemDeactivated();
+                if (submit || deactivated) {
+                    std::string newName(renameBuffer);
+                    if (!newName.empty()) {
+                        editor.renameSlice(s.id, newName);
+                    }
+                    renamingId = 0;
+                }
+            } else {
+                char label[256];
+                std::snprintf(label, sizeof(label), "%s##sl%d", s.name.c_str(), s.id);
+
+                if (ImGui::Selectable(label, sel, ImGuiSelectableFlags_SpanAllColumns)) {
+                    ImGuiIO& io = ImGui::GetIO();
+                    bool additive = io.KeyShift || io.KeyCtrl || io.KeySuper;
+                    if (additive) {
+                        if (sel) editor.project.slices.selectRemove(s.id);
+                        else     editor.project.slices.selectAdd(s.id);
+                    } else {
+                        editor.project.slices.selectOnly(s.id);
+                    }
+                }
+
+                if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
+                    if (!sel) editor.project.slices.selectOnly(s.id);
+                    contextMenuId = s.id;
+                    ImGui::OpenPopup("##slice_ctx");
+                }
+
+                if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+                    renamingId = s.id;
+                    renameFocusPending = true;
+                    std::strncpy(renameBuffer, s.name.c_str(), sizeof(renameBuffer) - 1);
+                    renameBuffer[sizeof(renameBuffer) - 1] = '\0';
                 }
             }
 
-            ImGui::TableSetColumnIndex(1);
+            ImGui::TableSetColumnIndex(2);
             if (g_FontMono) ImGui::PushFont(g_FontMono);
             ImGui::TextColored(INK_3, "%d\xc3\x97%d",
                                (int)s.rect.width, (int)s.rect.height);
             if (g_FontMono) ImGui::PopFont();
+        }
+
+        if (ImGui::BeginPopup("##slice_ctx")) {
+            int targetId = contextMenuId;
+            const Slice* target = editor.project.slices.find(targetId);
+            int selN = editor.project.slices.selectionCount();
+            bool canRename = target != nullptr && selN <= 1;
+
+            if (ImGui::MenuItem("Rename", nullptr, false, canRename)) {
+                renamingId = targetId;
+                renameFocusPending = true;
+                std::strncpy(renameBuffer, target->name.c_str(), sizeof(renameBuffer) - 1);
+                renameBuffer[sizeof(renameBuffer) - 1] = '\0';
+            }
+            if (ImGui::MenuItem("Duplicate", "Ctrl+D")) {
+                editor.duplicateSelected();
+            }
+            if (ImGui::MenuItem("Trim Transparent Edges", nullptr, false,
+                                editor.project.isImageLoaded())) {
+                editor.trimSelected();
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Delete", "Del")) {
+                editor.deleteSelected();
+            }
+            ImGui::EndPopup();
         }
 
         ImGui::EndTable();

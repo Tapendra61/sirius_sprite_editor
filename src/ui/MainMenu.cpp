@@ -1,5 +1,7 @@
 #include "ui/MainMenu.h"
 
+#include <cstdio>
+#include <filesystem>
 #include <string>
 #include <vector>
 #include "app/Editor.h"
@@ -88,6 +90,30 @@ void MainMenu::draw(Editor& editor) {
             if (ImGui::MenuItem("Open Project...", "Ctrl+O")) {
                 editor.openProject();
             }
+
+            const std::vector<std::string>& recents = editor.recentFiles.items();
+            if (ImGui::BeginMenu("Open Recent", !recents.empty())) {
+                pushItemPad();
+                for (size_t i = 0; i < recents.size(); ++i) {
+                    std::filesystem::path p(recents[i]);
+                    char label[512];
+                    std::snprintf(label, sizeof(label), "%s##rcnt%d",
+                                  p.filename().string().c_str(), (int)i);
+                    if (ImGui::MenuItem(label)) {
+                        editor.openProjectPath(recents[i]);
+                    }
+                    if (ImGui::IsItemHovered()) {
+                        ImGui::SetTooltip("%s", recents[i].c_str());
+                    }
+                }
+                ImGui::Separator();
+                if (ImGui::MenuItem("Clear Recent")) {
+                    editor.recentFiles.clear();
+                }
+                popItemPad();
+                ImGui::EndMenu();
+            }
+
             if (ImGui::MenuItem("Save", "Ctrl+S")) {
                 editor.saveProject();
             }
@@ -177,6 +203,12 @@ void MainMenu::draw(Editor& editor) {
             }
             if (ImGui::MenuItem("Auto Slice...", "Ctrl+Shift+A", false, hasImage)) {
                 editor.autoModal.open();
+            }
+            ImGui::Separator();
+            bool hasSelection = editor.project.slices.selectionCount() > 0;
+            if (ImGui::MenuItem("Trim Selected", nullptr, false,
+                                hasImage && hasSelection)) {
+                editor.trimSelected();
             }
             popItemPad();
             ImGui::EndMenu();

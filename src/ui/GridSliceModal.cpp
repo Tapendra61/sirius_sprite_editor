@@ -1,5 +1,7 @@
 #include "ui/GridSliceModal.h"
 
+#include <cstdio>
+#include <cstring>
 #include <memory>
 #include <string>
 #include "app/Editor.h"
@@ -21,6 +23,53 @@ GridSliceModal::GridSliceModal()
       paddingX(0),
       paddingY(0),
       replaceAll(true) {
+    std::strncpy(namePattern, "slice_{i}", sizeof(namePattern) - 1);
+    namePattern[sizeof(namePattern) - 1] = '\0';
+}
+
+static std::string expandPattern(const std::string& pat, int idx, int row, int col, int total) {
+    int width = 1;
+    int t = total;
+    while (t >= 10) { t /= 10; ++width; }
+
+    std::string out;
+    out.reserve(pat.size() + 8);
+    char buf[32];
+
+    for (size_t k = 0; k < pat.size(); ++k) {
+        if (pat[k] == '{' && k + 2 < pat.size() && pat[k + 2] == '}') {
+            char tok = pat[k + 1];
+            if (tok == 'i') {
+                std::snprintf(buf, sizeof(buf), "%0*d", width, idx);
+                out += buf;
+                k += 2;
+                continue;
+            }
+            if (tok == 'r') {
+                std::snprintf(buf, sizeof(buf), "%d", row);
+                out += buf;
+                k += 2;
+                continue;
+            }
+            if (tok == 'c') {
+                std::snprintf(buf, sizeof(buf), "%d", col);
+                out += buf;
+                k += 2;
+                continue;
+            }
+        }
+        out += pat[k];
+    }
+    return out;
+}
+
+static int countGridCols(int imgW, int cellW, int offX, int padX) {
+    if (cellW <= 0) return 1;
+    int strideX = cellW + padX;
+    if (strideX <= 0) return 1;
+    int cols = 0;
+    for (int x = offX; x + cellW <= imgW; x += strideX) ++cols;
+    return cols < 1 ? 1 : cols;
 }
 
 GridSliceModal::~GridSliceModal() {
@@ -85,6 +134,10 @@ void GridSliceModal::draw(Editor& editor) {
     ImGui::InputInt("Padding Y", &paddingY);
 
     ImGui::Separator();
+    ImGui::InputText("Name Pattern", namePattern, sizeof(namePattern));
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Tokens: {i}=index, {r}=row, {c}=column");
+    }
     ImGui::Checkbox("Replace existing slices", &replaceAll);
 
     if (cellWidth  < 1) cellWidth  = 1;
@@ -132,10 +185,22 @@ void GridSliceModal::draw(Editor& editor) {
         if (!replaceAll) {
             newSlices = oldSlices;
         }
+
+        int effCellW = (mode == GridMode::BySize) ? cellWidth :
+            (imgW - offsetX - (columns - 1) * paddingX) / (columns > 0 ? columns : 1);
+        if (effCellW < 1) effCellW = 1;
+        int colCount = countGridCols(imgW, effCellW, offsetX, paddingX);
+        std::string pattern(namePattern);
+        if (pattern.empty()) pattern = "slice_{i}";
+        int total = (int)rects.size();
+
         for (size_t i = 0; i < rects.size(); ++i) {
             Slice s;
             s.id = editor.project.nextId();
-            s.name = std::string("slice_") + std::to_string(s.id);
+            int idx = (int)i + 1;
+            int r = (int)i / colCount + 1;
+            int c = (int)i % colCount + 1;
+            s.name = expandPattern(pattern, idx, r, c, total);
             s.rect = rects[i];
             s.pivot = { 0.5f, 0.5f };
             s.border = { 0.0f, 0.0f, 0.0f, 0.0f };

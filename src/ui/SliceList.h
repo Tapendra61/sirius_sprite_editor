@@ -14,6 +14,10 @@ public:
 
 private:
     std::string searchText;
+    int  renamingId = 0;
+    char renameBuffer[128] = {0};
+    bool renameFocusPending = false;
+    int  contextMenuId = 0;
 };
 
 #endif

@@ -35,6 +35,7 @@ private:
     int paddingX;
     int paddingY;
     bool replaceAll;
+    char namePattern[128];
 };
 
 #endif

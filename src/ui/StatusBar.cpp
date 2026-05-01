@@ -1,5 +1,7 @@
 #include "ui/StatusBar.h"
 
+#include <cstdio>
+#include <filesystem>
 #include "app/Editor.h"
 #include "ui/Theme.h"
 #include "util/Coords.h"
@@ -102,14 +104,20 @@ void StatusBar::draw(Editor& editor) {
     ImGui::SameLine(0.0f, 4.0f);
     ImGui::TextColored(INK_2, "selected");
 
-    // Dirty indicator (right-aligned)
-    if (editor.project.isDirty()) {
-        const char* dot = "\xe2\x97\x8f";  // ●
-        ImVec2 dotSize = ImGui::CalcTextSize(dot);
-        float regionRight = ImGui::GetWindowContentRegionMax().x;
-        ImGui::SameLine(regionRight - dotSize.x);
-        ImGui::TextColored(PIVOT, "%s", dot);
+    // Project filename + dirty marker (right-aligned)
+    char title[512];
+    const char* dirty = editor.project.isDirty() ? "*" : "";
+    if (editor.project.projectPath.empty()) {
+        std::snprintf(title, sizeof(title), "untitled%s", dirty);
+    } else {
+        std::filesystem::path p(editor.project.projectPath);
+        std::snprintf(title, sizeof(title), "%s%s",
+                      p.filename().string().c_str(), dirty);
     }
+    ImVec2 titleSize = ImGui::CalcTextSize(title);
+    float regionRight = ImGui::GetWindowContentRegionMax().x;
+    ImGui::SameLine(regionRight - titleSize.x);
+    ImGui::TextColored(editor.project.isDirty() ? PIVOT : INK_2, "%s", title);
 
     if (g_FontMono) ImGui::PopFont();
 

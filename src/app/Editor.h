@@ -1,10 +1,12 @@
 #ifndef SIRIUS_EDITOR_H
 #define SIRIUS_EDITOR_H
 
+#include <string>
 #include <vector>
 #include "raylib.h"
 #include "app/Keybindings.h"
 #include "app/Project.h"
+#include "app/RecentFiles.h"
 #include "commands/CommandStack.h"
 #include "model/Slice.h"
 #include "ui/MainMenu.h"
@@ -50,6 +52,7 @@ public:
     void render();
 
     void openProject();
+    void openProjectPath(const std::string& path);
     void saveProject();
     void saveProjectAs();
 
@@ -57,11 +60,17 @@ public:
     void zoomFit();
     void zoomBy(float factor);
 
+    void deleteSelected();
+    void duplicateSelected();
+    void trimSelected();
+    void renameSlice(int sliceId, const std::string& newName);
+
     Project project;
     CanvasView view;
     CommandStack commands;
     DragState drag;
     Keybindings keybindings;
+    RecentFiles recentFiles;
     bool shouldExit;
     bool resetLayoutRequested;
 

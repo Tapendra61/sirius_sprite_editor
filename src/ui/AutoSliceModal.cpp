@@ -1,5 +1,7 @@
 #include "ui/AutoSliceModal.h"
 
+#include <cstdio>
+#include <cstring>
 #include <memory>
 #include <string>
 #include "app/Editor.h"
@@ -18,6 +20,32 @@ AutoSliceModal::AutoSliceModal()
       eightConnected(true),
       replaceAll(true),
       needsRecompute(true) {
+    std::strncpy(namePattern, "auto_{i}", sizeof(namePattern) - 1);
+    namePattern[sizeof(namePattern) - 1] = '\0';
+}
+
+static std::string expandPattern(const std::string& pat, int idx, int total) {
+    int width = 1;
+    int t = total;
+    while (t >= 10) { t /= 10; ++width; }
+
+    std::string out;
+    out.reserve(pat.size() + 8);
+    char buf[32];
+
+    for (size_t k = 0; k < pat.size(); ++k) {
+        if (pat[k] == '{' && k + 2 < pat.size() && pat[k + 2] == '}') {
+            char tok = pat[k + 1];
+            if (tok == 'i') {
+                std::snprintf(buf, sizeof(buf), "%0*d", width, idx);
+                out += buf;
+                k += 2;
+                continue;
+            }
+        }
+        out += pat[k];
+    }
+    return out;
 }
 
 AutoSliceModal::~AutoSliceModal() {
@@ -65,6 +93,10 @@ void AutoSliceModal::draw(Editor& editor) {
     changed |= ImGui::Checkbox("8-connected",     &eightConnected);
 
     ImGui::Separator();
+    ImGui::InputText("Name Pattern", namePattern, sizeof(namePattern));
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Tokens: {i}=index");
+    }
     ImGui::Checkbox("Replace existing slices", &replaceAll);
 
     if (alphaThreshold < 0)   { alphaThreshold = 0;   changed = true; }
@@ -113,10 +145,13 @@ void AutoSliceModal::draw(Editor& editor) {
         if (!replaceAll) {
             newSlices = oldSlices;
         }
+        std::string pattern(namePattern);
+        if (pattern.empty()) pattern = "auto_{i}";
+        int total = (int)cachedRects.size();
         for (size_t i = 0; i < cachedRects.size(); ++i) {
             Slice s;
             s.id = editor.project.nextId();
-            s.name = std::string("auto_") + std::to_string(s.id);
+            s.name = expandPattern(pattern, (int)i + 1, total);
             s.rect = cachedRects[i];
             s.pivot = { 0.5f, 0.5f };
             s.border = { 0.0f, 0.0f, 0.0f, 0.0f };
