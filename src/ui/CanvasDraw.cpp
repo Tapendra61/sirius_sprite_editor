@@ -14,8 +14,8 @@ void drawCheckerboard(const Camera2D& camera, int panelW, int panelH) {
     int endX   = (int)std::ceil(bottomRightImg.x);
     int endY   = (int)std::ceil(bottomRightImg.y);
 
-    Color c1 = { 40, 40, 40, 255 };
-    Color c2 = { 50, 50, 50, 255 };
+    Color c1 = { 31, 31, 46, 255 };  // #1F1F2E
+    Color c2 = { 24, 24, 38, 255 };  // #181826
 
     for (int y = startY; y < endY; y += sq) {
         for (int x = startX; x < endX; x += sq) {
@@ -30,8 +30,8 @@ void drawCheckerboard(const Camera2D& camera, int panelW, int panelH) {
 void drawSliceOutlines(const Editor& editor) {
     float invZoom = 1.0f / editor.view.camera.zoom;
 
-    Color unselectedColor = { 200, 200, 210, 160 };
-    Color selectedColor   = { 91, 158, 255, 255 };
+    Color unselectedColor = { 176, 171, 189, 160 };  // ink-2 @ 60%
+    Color selectedColor   = { 129, 140, 248, 255 };  // accent-selection #818CF8
 
     const std::vector<Slice>& slices = editor.project.slices.slices;
     for (size_t i = 0; i < slices.size(); ++i) {
@@ -51,8 +51,8 @@ void drawSliceHandles(const Editor& editor) {
 
     const Camera2D& cam = editor.view.camera;
 
-    Color fill   = { 91, 158, 255, 255 };
-    Color border = { 240, 240, 245, 230 };
+    Color fill   = { 129, 140, 248, 255 };  // accent-selection
+    Color border = { 232, 230, 240, 230 };  // ink
 
     const float handleSize = 8.0f;
     const float halfSize = handleSize * 0.5f;
@@ -90,8 +90,8 @@ void drawMarquee(const Editor& editor) {
     Rectangle m = RectFromCorners(editor.drag.startImg, editor.drag.marqueeEnd);
     if (m.width < 0.5f && m.height < 0.5f) return;
 
-    Color fill    = { 91, 158, 255,  40 };
-    Color outline = { 91, 158, 255, 220 };
+    Color fill    = { 129, 140, 248,  40 };
+    Color outline = { 129, 140, 248, 220 };
     float thickness = 1.0f / editor.view.camera.zoom;
 
     DrawRectangleRec(m, fill);
@@ -104,8 +104,8 @@ void drawCreationPreview(const Editor& editor) {
     Rectangle r = RectFromCorners(editor.drag.startImg, editor.drag.marqueeEnd);
     if (r.width < 0.5f && r.height < 0.5f) return;
 
-    Color fill    = { 80, 200, 120,  40 };
-    Color outline = { 80, 200, 120, 230 };
+    Color fill    = { 107, 203, 119,  40 };  // accent-snap green
+    Color outline = { 107, 203, 119, 230 };
     float thickness = 1.0f / editor.view.camera.zoom;
 
     DrawRectangleRec(r, fill);
@@ -115,8 +115,8 @@ void drawCreationPreview(const Editor& editor) {
 void drawGridPreview(const Editor& editor) {
     if (!editor.gridModal.showing) return;
 
-    Color fill    = { 80, 200, 200,  30 };
-    Color outline = { 80, 200, 200, 220 };
+    Color fill    = { 79, 209, 197,  30 };  // accent-preview #4FD1C5
+    Color outline = { 79, 209, 197, 230 };
     float thickness = 1.0f / editor.view.camera.zoom;
 
     const std::vector<Slice>& preview = editor.gridModal.preview;
@@ -129,8 +129,8 @@ void drawGridPreview(const Editor& editor) {
 void drawAutoPreview(const Editor& editor) {
     if (!editor.autoModal.showing) return;
 
-    Color fill    = { 255, 180, 80,  30 };
-    Color outline = { 255, 180, 80, 230 };
+    Color fill    = { 79, 209, 197,  30 };  // accent-preview #4FD1C5
+    Color outline = { 79, 209, 197, 230 };
     float thickness = 1.0f / editor.view.camera.zoom;
 
     const std::vector<Slice>& preview = editor.autoModal.preview;

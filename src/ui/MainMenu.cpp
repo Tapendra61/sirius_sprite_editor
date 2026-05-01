@@ -31,7 +31,11 @@ static void openImageDialog(Editor& editor) {
 }
 
 void MainMenu::draw(Editor& editor) {
-    if (ImGui::BeginMainMenuBar()) {
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8.0f, 7.0f));
+    bool menuOpen = ImGui::BeginMainMenuBar();
+    ImGui::PopStyleVar();
+
+    if (menuOpen) {
         if (ImGui::BeginMenu("File")) {
             if (ImGui::MenuItem("Open Image...", "Ctrl+Shift+O")) {
                 openImageDialog(editor);

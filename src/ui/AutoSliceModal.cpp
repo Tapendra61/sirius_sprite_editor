@@ -6,6 +6,7 @@
 #include "commands/SliceCommands.h"
 #include "imgui.h"
 #include "ops/AutoSlicer.h"
+#include "ui/Theme.h"
 
 AutoSliceModal::AutoSliceModal()
     : showing(false),
@@ -98,13 +99,13 @@ void AutoSliceModal::draw(Editor& editor) {
 
     ImGui::Separator();
 
+    bool cancelClicked = ImGui::Button("Cancel");
+    ImGui::SameLine();
+
     bool canApply = !cachedRects.empty();
     if (!canApply) ImGui::BeginDisabled();
-    bool applyClicked = ImGui::Button("Apply");
+    bool applyClicked = PrimaryButton("Apply");
     if (!canApply) ImGui::EndDisabled();
-
-    ImGui::SameLine();
-    bool cancelClicked = ImGui::Button("Cancel");
 
     if (applyClicked) {
         std::vector<Slice> oldSlices = editor.project.slices.slices;

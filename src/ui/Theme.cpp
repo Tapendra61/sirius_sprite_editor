@@ -21,7 +21,7 @@ void LoadFonts() {
 
     ImFont* font = nullptr;
 #ifdef SIRIUS_FONT_PATH
-    font = io.Fonts->AddFontFromFileTTF(SIRIUS_FONT_PATH, 15.0f, &cfg);
+    font = io.Fonts->AddFontFromFileTTF(SIRIUS_FONT_PATH, 13.0f, &cfg);
 #endif
 
     if (font == nullptr) {
@@ -32,65 +32,70 @@ void LoadFonts() {
 void ApplyDarkTheme() {
     ImGuiStyle& s = ImGui::GetStyle();
 
-    // Spacing — modern but still dense enough for a pro tool
-    s.WindowPadding     = ImVec2(10.0f, 8.0f);
-    s.FramePadding      = ImVec2(10.0f, 6.0f);
-    s.CellPadding       = ImVec2(6.0f, 4.0f);
-    s.ItemSpacing       = ImVec2(8.0f, 6.0f);
-    s.ItemInnerSpacing  = ImVec2(6.0f, 4.0f);
-    s.IndentSpacing     = 20.0f;
-    s.ScrollbarSize     = 12.0f;
-    s.GrabMinSize       = 10.0f;
+    // Spacing — dense per the design brief (Aseprite/Blender feel)
+    s.WindowPadding     = ImVec2(8.0f, 8.0f);
+    s.FramePadding      = ImVec2(8.0f, 4.0f);
+    s.CellPadding       = ImVec2(4.0f, 3.0f);
+    s.ItemSpacing       = ImVec2(6.0f, 4.0f);
+    s.ItemInnerSpacing  = ImVec2(4.0f, 4.0f);
+    s.IndentSpacing     = 16.0f;
+    s.ScrollbarSize     = 10.0f;
+    s.GrabMinSize       = 8.0f;
 
-    // Borders
+    // Borders — 1px hairlines, including on input frames per design
     s.WindowBorderSize  = 1.0f;
     s.ChildBorderSize   = 1.0f;
     s.PopupBorderSize   = 1.0f;
-    s.FrameBorderSize   = 0.0f;
+    s.FrameBorderSize   = 1.0f;
     s.TabBorderSize     = 0.0f;
 
-    // Rounding — subtle, modern
-    s.WindowRounding    = 6.0f;
-    s.ChildRounding     = 4.0f;
-    s.FrameRounding     = 4.0f;
-    s.PopupRounding     = 6.0f;
-    s.ScrollbarRounding = 6.0f;
-    s.GrabRounding      = 4.0f;
-    s.TabRounding       = 4.0f;
+    // Rounding — sharp chrome (0-2px), modals at 4px
+    s.WindowRounding    = 0.0f;
+    s.ChildRounding     = 0.0f;
+    s.FrameRounding     = 2.0f;
+    s.PopupRounding     = 4.0f;
+    s.ScrollbarRounding = 2.0f;
+    s.GrabRounding      = 2.0f;
+    s.TabRounding       = 0.0f;
 
     // Alignment
-    s.WindowTitleAlign        = ImVec2(0.0f, 0.5f);
+    s.WindowTitleAlign         = ImVec2(0.0f, 0.5f);
     s.WindowMenuButtonPosition = ImGuiDir_Right;
-    s.ColorButtonPosition     = ImGuiDir_Right;
-    s.ButtonTextAlign         = ImVec2(0.5f, 0.5f);
+    s.ButtonTextAlign          = ImVec2(0.5f, 0.5f);
 
-    // Color palette
-    ImVec4 bgCanvas    = RGB(24, 27, 34, 255);
-    ImVec4 bgPanel     = RGB(29, 32, 39, 255);
-    ImVec4 bgElevated  = RGB(35, 39, 48, 255);
-    ImVec4 bgInput     = RGB(17, 19, 26, 255);
+    // Surface ladder
+    ImVec4 bgCanvas    = RGB( 10,  10,  15, 255);  // #0A0A0F
+    ImVec4 bgPanel     = RGB( 18,  18,  26, 255);  // #12121A
+    ImVec4 bgToolbar   = RGB( 26,  26,  38, 255);  // #1A1A26
+    ImVec4 bgInput     = RGB( 10,  10,  15, 255);  // #0A0A0F
+    ImVec4 bgElevated  = RGB( 26,  26,  38, 255);  // #1A1A26 (modal body)
+    ImVec4 bgRowHover  = RGB( 26,  26,  38, 255);  // #1A1A26
+    ImVec4 bgRowSel    = RGB(129, 140, 248,  31);  // indigo @ ~12% (rgba(129,140,248,0.12))
 
-    ImVec4 border         = RGB(44, 48, 58, 255);
-    ImVec4 borderStrong   = RGB(58, 63, 75, 255);
+    // Borders
+    ImVec4 border       = RGB( 42,  42,  61, 255); // #2A2A3D
+    ImVec4 border2      = RGB( 54,  54,  80, 255); // #363650
+    ImVec4 borderStrong = RGB( 74,  74, 102, 255); // #4A4A66
+    (void)borderStrong;
 
-    ImVec4 text         = RGB(225, 227, 232, 255);
-    ImVec4 textDisabled = RGB(95, 100, 110, 255);
+    // Ink
+    ImVec4 ink         = RGB(232, 230, 240, 255); // #E8E6F0
+    ImVec4 ink2        = RGB(176, 171, 189, 255); // #B0ABBD
+    ImVec4 ink3        = RGB(122, 116, 144, 255); // #7A7490
+    ImVec4 inkDisabled = RGB( 74,  70,  88, 255); // #4A4658
+    (void)ink2; (void)ink3;
 
-    ImVec4 accent        = RGB(91, 158, 255, 255);
-    ImVec4 accentHover   = RGB(126, 179, 255, 255);
-    ImVec4 accentActive  = RGB(74, 141, 232, 255);
-    ImVec4 accentSubtle  = RGB(91, 158, 255, 64);
-    ImVec4 accentMid     = RGB(91, 158, 255, 128);
-
-    ImVec4 buttonBg    = RGB(40, 44, 54, 255);
-    ImVec4 buttonHover = RGB(50, 55, 67, 255);
+    // Accent — indigo selection
+    ImVec4 accentSel       = RGB(129, 140, 248, 255); // #818CF8
+    ImVec4 accentSelSoft   = RGB(129, 140, 248,  38); // ~15% alpha
+    ImVec4 accentSelMid    = RGB(129, 140, 248,  90); // ~35%
 
     ImVec4 transparent = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
 
     ImVec4* c = s.Colors;
 
-    c[ImGuiCol_Text]                  = text;
-    c[ImGuiCol_TextDisabled]          = textDisabled;
+    c[ImGuiCol_Text]                  = ink;
+    c[ImGuiCol_TextDisabled]          = inkDisabled;
     c[ImGuiCol_WindowBg]              = bgPanel;
     c[ImGuiCol_ChildBg]               = bgPanel;
     c[ImGuiCol_PopupBg]               = bgElevated;
@@ -98,71 +103,88 @@ void ApplyDarkTheme() {
     c[ImGuiCol_BorderShadow]          = transparent;
 
     c[ImGuiCol_FrameBg]               = bgInput;
-    c[ImGuiCol_FrameBgHovered]        = RGB(28, 31, 41, 255);
-    c[ImGuiCol_FrameBgActive]         = RGB(34, 38, 50, 255);
+    c[ImGuiCol_FrameBgHovered]        = RGB(15, 15, 22, 255);
+    c[ImGuiCol_FrameBgActive]         = RGB(20, 20, 30, 255);
 
-    c[ImGuiCol_TitleBg]               = bgPanel;
-    c[ImGuiCol_TitleBgActive]         = bgElevated;
-    c[ImGuiCol_TitleBgCollapsed]      = bgPanel;
+    c[ImGuiCol_TitleBg]               = bgToolbar;
+    c[ImGuiCol_TitleBgActive]         = bgToolbar;
+    c[ImGuiCol_TitleBgCollapsed]      = bgToolbar;
 
-    c[ImGuiCol_MenuBarBg]             = bgElevated;
+    c[ImGuiCol_MenuBarBg]             = bgToolbar;
 
     c[ImGuiCol_ScrollbarBg]           = transparent;
     c[ImGuiCol_ScrollbarGrab]         = border;
-    c[ImGuiCol_ScrollbarGrabHovered]  = borderStrong;
-    c[ImGuiCol_ScrollbarGrabActive]   = accent;
+    c[ImGuiCol_ScrollbarGrabHovered]  = border2;
+    c[ImGuiCol_ScrollbarGrabActive]   = accentSel;
 
-    c[ImGuiCol_CheckMark]             = accent;
-    c[ImGuiCol_SliderGrab]            = accent;
-    c[ImGuiCol_SliderGrabActive]      = accentActive;
+    c[ImGuiCol_CheckMark]             = accentSel;
+    c[ImGuiCol_SliderGrab]            = accentSel;
+    c[ImGuiCol_SliderGrabActive]      = accentSel;
 
-    c[ImGuiCol_Button]                = buttonBg;
-    c[ImGuiCol_ButtonHovered]         = buttonHover;
-    c[ImGuiCol_ButtonActive]          = accent;
+    c[ImGuiCol_Button]                = bgInput;
+    c[ImGuiCol_ButtonHovered]         = bgToolbar;
+    c[ImGuiCol_ButtonActive]          = accentSelSoft;
 
-    c[ImGuiCol_Header]                = accentSubtle;
-    c[ImGuiCol_HeaderHovered]         = accentMid;
-    c[ImGuiCol_HeaderActive]          = accent;
+    c[ImGuiCol_Header]                = bgRowSel;
+    c[ImGuiCol_HeaderHovered]         = bgRowHover;
+    c[ImGuiCol_HeaderActive]          = accentSelSoft;
 
     c[ImGuiCol_Separator]             = border;
-    c[ImGuiCol_SeparatorHovered]      = accent;
-    c[ImGuiCol_SeparatorActive]       = accentActive;
+    c[ImGuiCol_SeparatorHovered]      = border2;
+    c[ImGuiCol_SeparatorActive]       = accentSel;
 
     c[ImGuiCol_ResizeGrip]            = transparent;
-    c[ImGuiCol_ResizeGripHovered]     = accentSubtle;
-    c[ImGuiCol_ResizeGripActive]      = accent;
+    c[ImGuiCol_ResizeGripHovered]     = accentSelSoft;
+    c[ImGuiCol_ResizeGripActive]      = accentSel;
 
-    ImVec4 tabRaised  = bgElevated;
-    ImVec4 tabHover   = RGB(48, 52, 64, 255);
-    ImVec4 tabInset   = bgInput;
-
-    c[ImGuiCol_Tab]                       = tabRaised;
-    c[ImGuiCol_TabHovered]                = tabHover;
-    c[ImGuiCol_TabSelected]               = tabInset;
+    // Tabs — selected = inset (darker than panel)
+    c[ImGuiCol_Tab]                       = bgPanel;
+    c[ImGuiCol_TabHovered]                = bgToolbar;
+    c[ImGuiCol_TabSelected]               = bgInput;
     c[ImGuiCol_TabSelectedOverline]       = transparent;
-    c[ImGuiCol_TabDimmed]                 = tabRaised;
-    c[ImGuiCol_TabDimmedSelected]         = tabInset;
+    c[ImGuiCol_TabDimmed]                 = bgPanel;
+    c[ImGuiCol_TabDimmedSelected]         = bgInput;
     c[ImGuiCol_TabDimmedSelectedOverline] = transparent;
 
-    c[ImGuiCol_DockingPreview]        = accentSubtle;
+    c[ImGuiCol_DockingPreview]        = accentSelSoft;
     c[ImGuiCol_DockingEmptyBg]        = bgCanvas;
 
-    c[ImGuiCol_PlotLines]             = text;
-    c[ImGuiCol_PlotLinesHovered]      = accent;
-    c[ImGuiCol_PlotHistogram]         = accent;
-    c[ImGuiCol_PlotHistogramHovered]  = accentHover;
+    c[ImGuiCol_PlotLines]             = ink;
+    c[ImGuiCol_PlotLinesHovered]      = accentSel;
+    c[ImGuiCol_PlotHistogram]         = accentSel;
+    c[ImGuiCol_PlotHistogramHovered]  = accentSel;
 
-    c[ImGuiCol_TableHeaderBg]         = bgElevated;
-    c[ImGuiCol_TableBorderStrong]     = borderStrong;
+    c[ImGuiCol_TableHeaderBg]         = bgToolbar;
+    c[ImGuiCol_TableBorderStrong]     = border2;
     c[ImGuiCol_TableBorderLight]      = border;
     c[ImGuiCol_TableRowBg]            = transparent;
     c[ImGuiCol_TableRowBgAlt]         = ImVec4(1.0f, 1.0f, 1.0f, 0.02f);
 
-    c[ImGuiCol_TextSelectedBg]        = accentMid;
-    c[ImGuiCol_DragDropTarget]        = accent;
+    c[ImGuiCol_TextSelectedBg]        = accentSelMid;
+    c[ImGuiCol_DragDropTarget]        = accentSel;
 
-    c[ImGuiCol_NavCursor]             = accent;
+    c[ImGuiCol_NavCursor]             = accentSel;
     c[ImGuiCol_NavWindowingHighlight] = transparent;
     c[ImGuiCol_NavWindowingDimBg]     = ImVec4(0.0f, 0.0f, 0.0f, 0.3f);
     c[ImGuiCol_ModalWindowDimBg]      = ImVec4(0.0f, 0.0f, 0.0f, 0.6f);
+}
+
+bool PrimaryButton(const char* label) {
+    ImGui::PushStyleColor(ImGuiCol_Button,        RGB(129, 140, 248, 255));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, RGB(158, 167, 251, 255));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive,  RGB(107, 119, 232, 255));
+    ImGui::PushStyleColor(ImGuiCol_Text,          ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+    bool clicked = ImGui::Button(label);
+    ImGui::PopStyleColor(4);
+    return clicked;
+}
+
+bool DangerButton(const char* label) {
+    ImGui::PushStyleColor(ImGuiCol_Button,        RGB(239, 95, 95, 255));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, RGB(245, 122, 122, 255));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive,  RGB(218, 75, 75, 255));
+    ImGui::PushStyleColor(ImGuiCol_Text,          ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+    bool clicked = ImGui::Button(label);
+    ImGui::PopStyleColor(4);
+    return clicked;
 }

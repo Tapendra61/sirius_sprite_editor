@@ -31,23 +31,6 @@ static void drawEmptyStateMessage(int w, int h) {
     DrawText(msg, (w - textW) / 2, h / 2 - fontSize / 2, fontSize, LIGHTGRAY);
 }
 
-static void drawEditToggle(Editor& editor, ImVec2 origin) {
-    ImGui::SetCursorScreenPos(ImVec2(origin.x + 12.0f, origin.y + 12.0f));
-    const char* label = editor.editMode ? "Edit: ON" : "Edit: OFF";
-    bool pushedStyle = editor.editMode;
-    if (pushedStyle) {
-        ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.36f, 0.62f, 1.0f, 0.85f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.50f, 0.71f, 1.0f, 0.95f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.29f, 0.55f, 0.91f, 1.0f));
-    }
-    if (ImGui::Button(label)) {
-        editor.editMode = !editor.editMode;
-    }
-    if (pushedStyle) {
-        ImGui::PopStyleColor(3);
-    }
-}
-
 void Canvas::draw(Editor& editor) {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
@@ -92,14 +75,8 @@ void Canvas::draw(Editor& editor) {
         }
     EndTextureMode();
 
-    ImVec2 imageOrigin = ImGui::GetCursorScreenPos();
     rlImGuiImageRenderTexture(&rt);
-    bool imageHovered = ImGui::IsItemHovered();
-
-    drawEditToggle(editor, imageOrigin);
-    bool buttonHovered = ImGui::IsItemHovered();
-
-    bool canvasHovered = imageHovered && !buttonHovered;
+    bool canvasHovered = ImGui::IsItemHovered();
 
     handleCanvasMouse(editor, canvasHovered);
     handleCanvasPanZoom(editor, canvasHovered);

@@ -90,5 +90,5 @@ add_executable(sprite_editor
 )
 target_include_directories(sprite_editor PRIVATE src ${pfd_SOURCE_DIR})
 target_compile_definitions(sprite_editor PRIVATE
-    SIRIUS_FONT_PATH="${imgui_SOURCE_DIR}/misc/fonts/Cousine-Regular.ttf")
+    SIRIUS_FONT_PATH="${imgui_SOURCE_DIR}/misc/fonts/Karla-Regular.ttf")
 target_link_libraries(sprite_editor PRIVATE rlimgui)

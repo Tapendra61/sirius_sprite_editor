@@ -29,7 +29,7 @@ static void buildDefaultLayout(ImGuiID dockId) {
     ImGui::DockBuilderFinish(dockId);
 }
 
-Editor::Editor() : editMode(true), shouldExit(false), resetLayoutRequested(false) {
+Editor::Editor() : shouldExit(false), resetLayoutRequested(false) {
     view.camera.target = { 0.0f, 0.0f };
     view.camera.offset = { 0.0f, 0.0f };
     view.camera.rotation = 0.0f;

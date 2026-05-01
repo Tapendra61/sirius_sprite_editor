@@ -49,7 +49,6 @@ public:
     CanvasView view;
     CommandStack commands;
     DragState drag;
-    bool editMode;
     bool shouldExit;
     bool resetLayoutRequested;
 

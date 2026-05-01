@@ -5,6 +5,7 @@
 #include <string>
 #include "app/Editor.h"
 #include "commands/SliceCommands.h"
+#include "imgui.h"
 #include "raylib.h"
 #include "util/Geometry.h"
 #include "util/HitTest.h"
@@ -102,7 +103,7 @@ static void handleMousePress(Editor& editor) {
             editor.drag.marqueeAdditive = true;
         } else {
             editor.project.slices.selectClear();
-            if (editor.editMode) {
+            if (editor.toolbar.mode == ToolMode::Rectangle) {
                 editor.drag.mode = DragMode::Creating;
             } else {
                 editor.drag.mode = DragMode::Marquee;
@@ -312,6 +313,9 @@ static void handleMouseRelease(Editor& editor) {
 }
 
 void handleCanvasMouse(Editor& editor, bool canvasHovered) {
+    // Move mode hijacks LMB for panning — suppress selection / drag interactions.
+    if (editor.toolbar.mode == ToolMode::Move) return;
+
     if (canvasHovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         handleMousePress(editor);
     }
@@ -358,10 +362,21 @@ static void panByWheel(Editor& editor, Vector2 wheel) {
 void handleCanvasPanZoom(Editor& editor, bool canvasHovered) {
     if (!canvasHovered) return;
 
+    // Middle-drag always pans
     if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) {
         Vector2 delta = GetMouseDelta();
         editor.view.camera.target.x -= delta.x / editor.view.camera.zoom;
         editor.view.camera.target.y -= delta.y / editor.view.camera.zoom;
+    }
+
+    // Move tool: LMB pans, and we show a 4-way cursor while hovering the canvas
+    if (editor.toolbar.mode == ToolMode::Move) {
+        ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            Vector2 delta = GetMouseDelta();
+            editor.view.camera.target.x -= delta.x / editor.view.camera.zoom;
+            editor.view.camera.target.y -= delta.y / editor.view.camera.zoom;
+        }
     }
 
     Vector2 wheel = GetMouseWheelMoveV();

@@ -6,6 +6,7 @@
 #include "commands/SliceCommands.h"
 #include "imgui.h"
 #include "ops/GridSlicer.h"
+#include "ui/Theme.h"
 
 GridSliceModal::GridSliceModal()
     : showing(false),
@@ -117,13 +118,13 @@ void GridSliceModal::draw(Editor& editor) {
 
     ImGui::Separator();
 
+    bool cancelClicked = ImGui::Button("Cancel");
+    ImGui::SameLine();
+
     bool canApply = !preview.empty();
     if (!canApply) ImGui::BeginDisabled();
-    bool applyClicked = ImGui::Button("Apply");
+    bool applyClicked = PrimaryButton("Apply");
     if (!canApply) ImGui::EndDisabled();
-
-    ImGui::SameLine();
-    bool cancelClicked = ImGui::Button("Cancel");
 
     if (applyClicked) {
         std::vector<Slice> oldSlices = editor.project.slices.slices;
