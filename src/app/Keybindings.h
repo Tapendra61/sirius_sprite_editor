@@ -1,6 +1,7 @@
 #ifndef SIRIUS_KEYBINDINGS_H
 #define SIRIUS_KEYBINDINGS_H
 
+#include <string>
 #include "imgui.h"
 
 enum class Action {
@@ -34,6 +35,7 @@ enum class Action {
 };
 
 struct ActionDef {
+    const char*    id;
     const char*    name;
     const char*    category;
     ImGuiKeyChord  defaultChord;
@@ -49,6 +51,10 @@ public:
     void resetToDefault(Action a);
     void resetAll();
 
+    bool save() const;
+    bool load();
+
+    static const char*    idOf(Action a);
     static const char*    nameOf(Action a);
     static const char*    categoryOf(Action a);
     static ImGuiKeyChord  defaultChordOf(Action a);

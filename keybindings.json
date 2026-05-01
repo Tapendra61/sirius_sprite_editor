@@ -1,0 +1,26 @@
+{
+  "bindings": {
+    "auto_slice": 12834,
+    "delete": 522,
+    "deselect": 526,
+    "duplicate": 4645,
+    "export": 4646,
+    "grid_slice": 4648,
+    "open_image": 12842,
+    "open_project": 4656,
+    "quit": 4658,
+    "redo": 12859,
+    "save_project": 4660,
+    "save_project_as": 12852,
+    "select_all": 4642,
+    "tool_move": 553,
+    "tool_rect": 563,
+    "tool_select": 567,
+    "undo": 4667,
+    "zoom_actual": 537,
+    "zoom_fit": 551,
+    "zoom_in": 602,
+    "zoom_out": 598
+  },
+  "version": 1
+}
