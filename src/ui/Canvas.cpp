@@ -57,11 +57,12 @@ void Canvas::draw(Editor& editor) {
         ClearBackground(BLANK);
 
         BeginMode2D(editor.view.camera);
-            drawCheckerboard(editor.view.camera, w, h);
+            drawCheckerboard(editor, w, h);
             if (editor.project.isImageLoaded()) {
                 Vector2 origin = { 0.0f, 0.0f };
                 DrawTextureV(editor.project.texture, origin, WHITE);
             }
+            drawPixelGrid(editor, w, h);
             drawSliceOutlines(editor);
             drawSliceBorders(editor);
             drawMarquee(editor);

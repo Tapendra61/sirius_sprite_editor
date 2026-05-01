@@ -383,4 +383,5 @@ void Editor::render() {
     exportModal.draw(*this);
     keybindingsModal.draw(*this);
     docsWindow.draw();
+    canvasOptionsPanel.draw(*this);
 }

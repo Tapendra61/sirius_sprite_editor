@@ -15,6 +15,36 @@ static bool isSnapModifierDown() {
         || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL);
 }
 
+// Snap helpers: pixel modifier always rounds to integers; otherwise if grid
+// snap is enabled in canvas options, snap to multiples of step.
+static float snapAxis(float v, int step, bool pixelOverride, bool gridOn) {
+    if (pixelOverride) return std::round(v);
+    if (gridOn && step > 1) return (float)((int)std::round(v / (float)step) * step);
+    return v;
+}
+
+static Vector2 snapVec(Vector2 p, const Editor& editor, bool pixelOverride) {
+    bool gridOn = editor.canvasOptions.gridSnapEnabled;
+    return {
+        snapAxis(p.x, editor.canvasOptions.gridSnapX, pixelOverride, gridOn),
+        snapAxis(p.y, editor.canvasOptions.gridSnapY, pixelOverride, gridOn),
+    };
+}
+
+static Rectangle snapRect(Rectangle r, const Editor& editor) {
+    bool gridOn = editor.canvasOptions.gridSnapEnabled;
+    int sx = editor.canvasOptions.gridSnapX;
+    int sy = editor.canvasOptions.gridSnapY;
+    Rectangle out = r;
+    out.x      = snapAxis(r.x,      sx, !gridOn, gridOn);
+    out.y      = snapAxis(r.y,      sy, !gridOn, gridOn);
+    out.width  = snapAxis(r.width,  sx, !gridOn, gridOn);
+    out.height = snapAxis(r.height, sy, !gridOn, gridOn);
+    if (out.width  < 1.0f) out.width  = 1.0f;
+    if (out.height < 1.0f) out.height = 1.0f;
+    return out;
+}
+
 static bool isAdditiveModifierDown() {
     if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) return true;
     if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) return true;
@@ -157,16 +187,13 @@ static void handleMousePress(Editor& editor) {
 }
 
 static void handleMouseDrag(Editor& editor) {
-    bool snap = isSnapModifierDown();
+    bool pixelOverride = isSnapModifierDown();
 
     bool inRectDrag = editor.drag.mode == DragMode::Marquee
                    || editor.drag.mode == DragMode::Creating;
     if (inRectDrag) {
         Vector2 mouseImg = ScreenToImage(GetMousePosition(), editor.view);
-        if (snap) {
-            mouseImg.x = std::round(mouseImg.x);
-            mouseImg.y = std::round(mouseImg.y);
-        }
+        mouseImg = snapVec(mouseImg, editor, pixelOverride);
         editor.drag.marqueeEnd = mouseImg;
         return;
     }
@@ -176,11 +203,7 @@ static void handleMouseDrag(Editor& editor) {
         Vector2 delta;
         delta.x = mouseImg.x - editor.drag.startImg.x;
         delta.y = mouseImg.y - editor.drag.startImg.y;
-
-        if (snap) {
-            delta.x = std::round(delta.x);
-            delta.y = std::round(delta.y);
-        }
+        delta = snapVec(delta, editor, pixelOverride);
 
         if (!editor.drag.dragHappened) {
             float zoom = editor.view.camera.zoom;
@@ -209,11 +232,7 @@ static void handleMouseDrag(Editor& editor) {
         Vector2 delta;
         delta.x = mouseImg.x - editor.drag.startImg.x;
         delta.y = mouseImg.y - editor.drag.startImg.y;
-
-        if (snap) {
-            delta.x = std::round(delta.x);
-            delta.y = std::round(delta.y);
-        }
+        delta = snapVec(delta, editor, pixelOverride);
 
         for (size_t i = 0; i < editor.drag.snapshot.size(); ++i) {
             if (editor.drag.snapshot[i].id != editor.drag.activeSliceId) continue;
@@ -241,12 +260,15 @@ static void commitMarquee(Editor& editor) {
 }
 
 static void commitMoving(Editor& editor) {
+    bool gridOn = editor.canvasOptions.gridSnapEnabled;
+    int sx = editor.canvasOptions.gridSnapX;
+    int sy = editor.canvasOptions.gridSnapY;
     std::vector<Slice> after;
     for (size_t i = 0; i < editor.drag.snapshot.size(); ++i) {
         Slice* live = editor.project.slices.find(editor.drag.snapshot[i].id);
         if (live == nullptr) continue;
-        live->rect.x = std::round(live->rect.x);
-        live->rect.y = std::round(live->rect.y);
+        live->rect.x = snapAxis(live->rect.x, sx, !gridOn, gridOn);
+        live->rect.y = snapAxis(live->rect.y, sy, !gridOn, gridOn);
         after.push_back(*live);
     }
     std::unique_ptr<EditSlicesCommand> cmd(new EditSlicesCommand(editor.drag.snapshot, after));
@@ -262,7 +284,12 @@ static void commitResizing(Editor& editor) {
         return;
     }
 
-    Rectangle r = SnapRectToPixels(NormalizeRect(live->rect));
+    Rectangle r = NormalizeRect(live->rect);
+    if (editor.canvasOptions.gridSnapEnabled) {
+        r = snapRect(r, editor);
+    } else {
+        r = SnapRectToPixels(r);
+    }
 
     if (r.width < 1.0f || r.height < 1.0f) {
         std::vector<Slice> deleted;
@@ -289,7 +316,12 @@ static void commitResizing(Editor& editor) {
 }
 
 static void commitCreating(Editor& editor) {
-    Rectangle r = SnapRectToPixels(RectFromCorners(editor.drag.startImg, editor.drag.marqueeEnd));
+    Rectangle r = RectFromCorners(editor.drag.startImg, editor.drag.marqueeEnd);
+    if (editor.canvasOptions.gridSnapEnabled) {
+        r = snapRect(r, editor);
+    } else {
+        r = SnapRectToPixels(r);
+    }
     if (r.width < 2.0f || r.height < 2.0f) return;
 
     Slice s;

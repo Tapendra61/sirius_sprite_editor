@@ -5,7 +5,8 @@
 
 class Editor;
 
-void drawCheckerboard(const Camera2D& camera, int panelW, int panelH);
+void drawCheckerboard(const Editor& editor, int panelW, int panelH);
+void drawPixelGrid(const Editor& editor, int panelW, int panelH);
 void drawSliceOutlines(const Editor& editor);
 void drawSliceBorders(const Editor& editor);
 void drawSliceHandles(const Editor& editor);

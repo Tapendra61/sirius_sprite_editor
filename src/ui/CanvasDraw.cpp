@@ -4,18 +4,24 @@
 #include "app/Editor.h"
 #include "util/Geometry.h"
 
-void drawCheckerboard(const Camera2D& camera, int panelW, int panelH) {
+void drawCheckerboard(const Editor& editor, int panelW, int panelH) {
+    if (!editor.canvasOptions.checkerVisible) return;
+
+    const Camera2D& camera = editor.view.camera;
     Vector2 topLeftImg     = GetScreenToWorld2D({ 0.0f, 0.0f }, camera);
     Vector2 bottomRightImg = GetScreenToWorld2D({ (float)panelW, (float)panelH }, camera);
 
-    const int sq = 16;
+    int sq = editor.canvasOptions.checkerSize;
+    if (sq < 2) sq = 2;
     int startX = (int)std::floor(topLeftImg.x / sq) * sq;
     int startY = (int)std::floor(topLeftImg.y / sq) * sq;
     int endX   = (int)std::ceil(bottomRightImg.x);
     int endY   = (int)std::ceil(bottomRightImg.y);
 
-    Color c1 = { 31, 31, 46, 255 };  // #1F1F2E
-    Color c2 = { 24, 24, 38, 255 };  // #181826
+    const int* l = editor.canvasOptions.checkerLight;
+    const int* d = editor.canvasOptions.checkerDark;
+    Color c1 = { (unsigned char)l[0], (unsigned char)l[1], (unsigned char)l[2], 255 };
+    Color c2 = { (unsigned char)d[0], (unsigned char)d[1], (unsigned char)d[2], 255 };
 
     for (int y = startY; y < endY; y += sq) {
         for (int x = startX; x < endX; x += sq) {
@@ -24,6 +30,30 @@ void drawCheckerboard(const Camera2D& camera, int panelW, int panelH) {
             bool dark = ((xi + yi) & 1) == 0;
             DrawRectangle(x, y, sq, sq, dark ? c1 : c2);
         }
+    }
+}
+
+void drawPixelGrid(const Editor& editor, int panelW, int panelH) {
+    if (!editor.canvasOptions.pixelGridVisible) return;
+    const Camera2D& camera = editor.view.camera;
+    if (camera.zoom < editor.canvasOptions.pixelGridZoomMin) return;
+
+    Vector2 topLeftImg     = GetScreenToWorld2D({ 0.0f, 0.0f }, camera);
+    Vector2 bottomRightImg = GetScreenToWorld2D({ (float)panelW, (float)panelH }, camera);
+
+    int x0 = (int)std::floor(topLeftImg.x);
+    int y0 = (int)std::floor(topLeftImg.y);
+    int x1 = (int)std::ceil(bottomRightImg.x);
+    int y1 = (int)std::ceil(bottomRightImg.y);
+
+    Color line = { 255, 255, 255, 22 };  // soft white
+    float thick = 1.0f / camera.zoom;
+
+    for (int x = x0; x <= x1; ++x) {
+        DrawLineEx({ (float)x, (float)y0 }, { (float)x, (float)y1 }, thick, line);
+    }
+    for (int y = y0; y <= y1; ++y) {
+        DrawLineEx({ (float)x0, (float)y }, { (float)x1, (float)y }, thick, line);
     }
 }
 

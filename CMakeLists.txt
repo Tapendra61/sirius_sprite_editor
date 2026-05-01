@@ -90,6 +90,7 @@ add_executable(sprite_editor
     src/ui/ExportModal.cpp
     src/ui/KeybindingsModal.cpp
     src/ui/DocsWindow.cpp
+    src/ui/CanvasOptionsPanel.cpp
     src/ui/Theme.cpp
     src/ui/CanvasDraw.cpp
     src/ui/CanvasInput.cpp

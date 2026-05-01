@@ -166,6 +166,9 @@ void MainMenu::draw(Editor& editor) {
 
             ImGui::Separator();
 
+            if (ImGui::MenuItem("Canvas...")) {
+                editor.canvasOptionsPanel.show();
+            }
             if (ImGui::MenuItem("Keybindings...")) {
                 editor.keybindingsModal.open();
             }

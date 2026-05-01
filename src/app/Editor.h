@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "raylib.h"
+#include "app/CanvasOptions.h"
 #include "app/Keybindings.h"
 #include "app/Project.h"
 #include "app/RecentFiles.h"
@@ -20,6 +21,7 @@
 #include "ui/ExportModal.h"
 #include "ui/KeybindingsModal.h"
 #include "ui/DocsWindow.h"
+#include "ui/CanvasOptionsPanel.h"
 #include "util/Coords.h"
 #include "util/HitTest.h"
 
@@ -72,6 +74,7 @@ public:
     DragState drag;
     Keybindings keybindings;
     RecentFiles recentFiles;
+    CanvasOptions canvasOptions;
     bool shouldExit;
     bool resetLayoutRequested;
 
@@ -84,8 +87,9 @@ public:
     GridSliceModal   gridModal;
     AutoSliceModal   autoModal;
     ExportModal      exportModal;
-    KeybindingsModal keybindingsModal;
-    DocsWindow       docsWindow;
+    KeybindingsModal   keybindingsModal;
+    DocsWindow         docsWindow;
+    CanvasOptionsPanel canvasOptionsPanel;
 
     Texture2D iconCmd;
     Texture2D iconShift;
