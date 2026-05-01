@@ -14,6 +14,7 @@
 #include "ui/StatusBar.h"
 #include "ui/GridSliceModal.h"
 #include "ui/AutoSliceModal.h"
+#include "ui/ExportModal.h"
 #include "util/Coords.h"
 #include "util/HitTest.h"
 
@@ -60,6 +61,7 @@ public:
     StatusBar statusBar;
     GridSliceModal gridModal;
     AutoSliceModal autoModal;
+    ExportModal    exportModal;
 };
 
 #endif

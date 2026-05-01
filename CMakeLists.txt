@@ -77,6 +77,7 @@ add_executable(sprite_editor
     src/ui/StatusBar.cpp
     src/ui/GridSliceModal.cpp
     src/ui/AutoSliceModal.cpp
+    src/ui/ExportModal.cpp
     src/ui/Theme.cpp
     src/ui/CanvasDraw.cpp
     src/ui/CanvasInput.cpp

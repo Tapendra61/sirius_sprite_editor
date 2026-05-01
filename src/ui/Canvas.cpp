@@ -62,6 +62,7 @@ void Canvas::draw(Editor& editor) {
                 DrawTextureV(editor.project.texture, origin, WHITE);
             }
             drawSliceOutlines(editor);
+            drawSliceBorders(editor);
             drawMarquee(editor);
             drawCreationPreview(editor);
             drawGridPreview(editor);
@@ -69,6 +70,7 @@ void Canvas::draw(Editor& editor) {
         EndMode2D();
 
         drawSliceHandles(editor);
+        drawSlicePivots(editor);
 
         if (!editor.project.isImageLoaded()) {
             drawEmptyStateMessage(w, h);

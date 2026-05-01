@@ -2,6 +2,7 @@
 
 #include "app/Editor.h"
 #include "imgui.h"
+#include "imgui_internal.h"
 
 Toolbar::Toolbar() : mode(ToolMode::Select) {
 }
@@ -9,10 +10,9 @@ Toolbar::Toolbar() : mode(ToolMode::Select) {
 Toolbar::~Toolbar() {
 }
 
-static const ImVec4 ACCENT_SEL      = ImVec4(0.506f, 0.549f, 0.973f, 1.0f);  // #818CF8
+static const ImVec4 ACCENT_SEL      = ImVec4(0.506f, 0.549f, 0.973f, 1.0f);
 static const ImVec4 ACCENT_SEL_SOFT = ImVec4(0.506f, 0.549f, 0.973f, 0.15f);
-static const ImVec4 INK_2           = ImVec4(0.690f, 0.671f, 0.741f, 1.0f);
-static const ImVec4 INK_3           = ImVec4(0.478f, 0.455f, 0.565f, 1.0f);
+static const ImVec4 BG_TOOLBAR      = ImVec4( 26.0f / 255.0f,  26.0f / 255.0f,  38.0f / 255.0f, 1.0f);
 
 static bool modeButton(const char* label, const char* shortcut, bool active) {
     if (active) {
@@ -44,9 +44,21 @@ static void verticalSep() {
 }
 
 void Toolbar::draw(Editor& editor) {
-    ImGui::Begin("Toolbar");
+    float h = ImGui::GetFrameHeight() + 14.0f;
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoSavedSettings;
 
-    // Mode group
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, BG_TOOLBAR);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 4.0f));
+    bool open = ImGui::BeginViewportSideBar("##Toolbar", ImGui::GetMainViewport(),
+                                              ImGuiDir_Up, h, flags);
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor();
+
+    if (!open) {
+        ImGui::End();
+        return;
+    }
+
     if (modeButton("Select", "V", mode == ToolMode::Select)) {
         mode = ToolMode::Select;
     }
@@ -61,7 +73,6 @@ void Toolbar::draw(Editor& editor) {
 
     verticalSep();
 
-    // Action group
     bool hasImage = editor.project.isImageLoaded();
     if (!hasImage) ImGui::BeginDisabled();
     if (ImGui::Button("Grid Slice  \xe2\x8c\x98G")) {
@@ -75,10 +86,12 @@ void Toolbar::draw(Editor& editor) {
 
     verticalSep();
 
-    // Export (Phase 7 placeholder)
-    ImGui::BeginDisabled();
-    ImGui::Button("Export  \xe2\x8c\x98" "E");
-    ImGui::EndDisabled();
+    bool hasSlices = editor.project.slices.count() > 0;
+    if (!hasSlices) ImGui::BeginDisabled();
+    if (ImGui::Button("Export  \xe2\x8c\x98" "E")) {
+        editor.exportModal.open();
+    }
+    if (!hasSlices) ImGui::EndDisabled();
 
     ImGui::End();
 }

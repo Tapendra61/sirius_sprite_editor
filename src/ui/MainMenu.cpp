@@ -49,6 +49,13 @@ void MainMenu::draw(Editor& editor) {
 
             ImGui::Separator();
 
+            bool hasSlices = editor.project.slices.count() > 0;
+            if (ImGui::MenuItem("Export...", "Ctrl+E", false, hasSlices)) {
+                editor.exportModal.open();
+            }
+
+            ImGui::Separator();
+
             if (ImGui::MenuItem("Quit", "Ctrl+Q")) {
                 editor.shouldExit = true;
             }

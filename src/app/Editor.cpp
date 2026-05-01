@@ -18,10 +18,6 @@ static void buildDefaultLayout(ImGuiID dockId) {
     ImGuiID rightBottomDock;
     ImGui::DockBuilderSplitNode(rightDock, ImGuiDir_Down, 0.40f, &rightBottomDock, &rightDock);
 
-    ImGuiID toolbarDock;
-    ImGui::DockBuilderSplitNode(mainDock, ImGuiDir_Up, 0.08f, &toolbarDock, &mainDock);
-
-    ImGui::DockBuilderDockWindow("Toolbar", toolbarDock);
     ImGui::DockBuilderDockWindow("Canvas", mainDock);
     ImGui::DockBuilderDockWindow("Slices", rightDock);
     ImGui::DockBuilderDockWindow("Inspector", rightBottomDock);
@@ -133,6 +129,7 @@ void Editor::update() {
 
 void Editor::render() {
     mainMenu.draw(*this);
+    toolbar.draw(*this);
     statusBar.draw(*this);
 
     ImGuiID dockId = ImGui::DockSpaceOverViewport();
@@ -153,10 +150,10 @@ void Editor::render() {
         resetLayoutRequested = false;
     }
 
-    toolbar.draw(*this);
     canvas.draw(*this);
     inspector.draw(*this);
     sliceList.draw(*this);
     gridModal.draw(*this);
     autoModal.draw(*this);
+    exportModal.draw(*this);
 }

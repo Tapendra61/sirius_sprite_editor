@@ -84,6 +84,51 @@ void drawSliceHandles(const Editor& editor) {
     }
 }
 
+void drawSliceBorders(const Editor& editor) {
+    Color borderCol = { 199, 146, 234, 220 };  // accent-border #C792EA
+    float thickness = 1.0f / editor.view.camera.zoom;
+
+    const std::vector<Slice>& slices = editor.project.slices.slices;
+    for (size_t i = 0; i < slices.size(); ++i) {
+        const Slice& s = slices[i];
+        if (s.border.x == 0.0f && s.border.y == 0.0f &&
+            s.border.width == 0.0f && s.border.height == 0.0f) continue;
+
+        float innerX = s.rect.x + s.border.x;
+        float innerY = s.rect.y + s.border.y;
+        float innerW = s.rect.width  - s.border.x - s.border.width;
+        float innerH = s.rect.height - s.border.y - s.border.height;
+
+        if (innerW <= 0.0f || innerH <= 0.0f) continue;
+
+        Rectangle inner = { innerX, innerY, innerW, innerH };
+        DrawRectangleLinesEx(inner, thickness, borderCol);
+    }
+}
+
+void drawSlicePivots(const Editor& editor) {
+    const std::vector<int>& selIds = editor.project.slices.selectedIds;
+    if (selIds.empty()) return;
+
+    const Camera2D& cam = editor.view.camera;
+    Color fill   = { 245, 158, 107, 255 };  // accent-pivot #F59E6B
+    Color border = { 255, 255, 255, 230 };
+    const float radius = 5.0f;
+
+    for (size_t i = 0; i < selIds.size(); ++i) {
+        const Slice* s = editor.project.slices.find(selIds[i]);
+        if (s == nullptr) continue;
+
+        Vector2 pivotImg;
+        pivotImg.x = s->rect.x + s->pivot.x * s->rect.width;
+        pivotImg.y = s->rect.y + s->pivot.y * s->rect.height;
+        Vector2 p = GetWorldToScreen2D(pivotImg, cam);
+
+        DrawCircle((int)p.x, (int)p.y, radius, fill);
+        DrawCircleLines((int)p.x, (int)p.y, radius, border);
+    }
+}
+
 void drawMarquee(const Editor& editor) {
     if (editor.drag.mode != DragMode::Marquee) return;
 
