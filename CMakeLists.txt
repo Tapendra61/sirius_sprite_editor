@@ -111,6 +111,19 @@ add_executable(sprite_editor
 target_include_directories(sprite_editor PRIVATE src ${pfd_SOURCE_DIR})
 target_link_libraries(sprite_editor PRIVATE rlimgui nlohmann_json::nlohmann_json)
 
+# Windows: portable-file-dialogs pulls in <windows.h>, which (a) defines
+# `Rectangle` as a GDI function — clashing with raylib's Rectangle struct
+# and producing nonsense errors like "'trimmed': undeclared identifier" — and
+# (b) bloats compile times. NOGDI strips the GDI subset, NOMINMAX prevents
+# min/max macros from clobbering std::min/std::max, and WIN32_LEAN_AND_MEAN
+# trims everything else we don't use.
+if(WIN32)
+    target_compile_definitions(sprite_editor PRIVATE
+        NOGDI
+        NOMINMAX
+        WIN32_LEAN_AND_MEAN)
+endif()
+
 # Copy `resources/` next to the executable so relative paths work regardless
 # of the cwd the binary is launched from (Windows VS / Xcode / running from
 # build dir all just work).
