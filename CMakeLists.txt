@@ -105,21 +105,22 @@ add_executable(sprite_editor
     src/commands/CommandStack.cpp
     src/commands/SliceCommands.cpp
     src/util/ConfigDir.cpp
+    src/util/FileDialog.cpp
     src/util/HitTest.cpp
     src/util/JsonFile.cpp
 )
 target_include_directories(sprite_editor PRIVATE src ${pfd_SOURCE_DIR})
 target_link_libraries(sprite_editor PRIVATE rlimgui nlohmann_json::nlohmann_json)
 
-# Windows: portable-file-dialogs pulls in <windows.h>, which (a) defines
-# `Rectangle` as a GDI function — clashing with raylib's Rectangle struct
-# and producing nonsense errors like "'trimmed': undeclared identifier" — and
-# (b) bloats compile times. NOGDI strips the GDI subset, NOMINMAX prevents
-# min/max macros from clobbering std::min/std::max, and WIN32_LEAN_AND_MEAN
-# trims everything else we don't use.
+# Windows hygiene: prevent <windows.h> (pulled in by portable-file-dialogs)
+# from defining min/max macros (which clobber std::min/std::max) and from
+# bringing in the entire Win32 surface area we don't use. We do NOT define
+# NOGDI here because pfd's commdlg.h needs LOGFONT/LPLOGFONTA. The
+# CloseWindow / ShowCursor / etc. clashes with raylib are avoided by keeping
+# pfd in its own translation unit (src/util/FileDialog.cpp) — see the comment
+# at the top of that file.
 if(WIN32)
     target_compile_definitions(sprite_editor PRIVATE
-        NOGDI
         NOMINMAX
         WIN32_LEAN_AND_MEAN)
 endif()

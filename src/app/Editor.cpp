@@ -10,7 +10,7 @@
 #include "imgui_internal.h"
 #include "ops/Importer.h"
 #include "ops/Trim.h"
-#include "portable-file-dialogs.h"
+#include "util/FileDialog.h"
 
 static void buildDefaultLayout(ImGuiID dockId) {
     ImGui::DockBuilderRemoveNode(dockId);
@@ -103,10 +103,9 @@ void Editor::update() {
             "Image Files", "*.png *.jpg *.jpeg *.bmp *.tga *.gif",
             "All Files", "*"
         };
-        std::vector<std::string> sel = pfd::open_file(
-            "Open Image", "", filters, pfd::opt::none).result();
-        if (!sel.empty()) {
-            if (project.loadImage(sel[0])) {
+        std::string pick = dlg::openFile("Open Image", filters);
+        if (!pick.empty()) {
+            if (project.loadImage(pick)) {
                 view.camera.target = { 0.0f, 0.0f };
                 view.camera.zoom = 1.0f;
             }
@@ -170,10 +169,9 @@ static std::vector<std::string> projectFilters() {
 }
 
 void Editor::openProject() {
-    std::vector<std::string> picks = pfd::open_file(
-        "Open Project", "", projectFilters(), pfd::opt::none).result();
-    if (picks.empty()) return;
-    openProjectPath(picks[0]);
+    std::string pick = dlg::openFile("Open Project", projectFilters());
+    if (pick.empty()) return;
+    openProjectPath(pick);
 }
 
 void Editor::openProjectPath(const std::string& path) {
@@ -335,9 +333,7 @@ void Editor::zoomBy(float factor) {
 }
 
 void Editor::saveProjectAs() {
-    std::string path = pfd::save_file(
-        "Save Project As", "untitled.srsprite",
-        projectFilters(), pfd::opt::none).result();
+    std::string path = dlg::saveFile("Save Project As", "untitled.srsprite", projectFilters());
     if (path.empty()) return;
 
     if (Importer::saveProject(project, view, path)) {

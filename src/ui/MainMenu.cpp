@@ -6,7 +6,7 @@
 #include <vector>
 #include "app/Editor.h"
 #include "imgui.h"
-#include "portable-file-dialogs.h"
+#include "util/FileDialog.h"
 
 MainMenu::MainMenu() {
 }
@@ -21,11 +21,9 @@ static void openImageDialog(Editor& editor) {
     filters.push_back("All Files");
     filters.push_back("*");
 
-    std::vector<std::string> selection = pfd::open_file(
-        "Open Image", "", filters, pfd::opt::none).result();
-
-    if (!selection.empty()) {
-        if (editor.project.loadImage(selection[0])) {
+    std::string pick = dlg::openFile("Open Image", filters);
+    if (!pick.empty()) {
+        if (editor.project.loadImage(pick)) {
             editor.view.camera.target = { 0.0f, 0.0f };
             editor.view.camera.zoom = 1.0f;
         }

@@ -7,9 +7,9 @@
 #include "app/Editor.h"
 #include "imgui.h"
 #include "ops/Exporter.h"
-#include "portable-file-dialogs.h"
 #include "ui/Palette.h"
 #include "ui/Theme.h"
+#include "util/FileDialog.h"
 
 ExportModal::ExportModal()
     : showing(false),
@@ -36,17 +36,15 @@ static void runBrowse(int formatIdx, char* pathBuf, size_t cap) {
             "JSON", "*.json",
             "All Files", "*"
         };
-        sel = pfd::save_file(
-            "Save Atlas JSON", "atlas.json", filters, pfd::opt::none).result();
+        sel = dlg::saveFile("Save Atlas JSON", "atlas.json", filters);
     } else if (formatIdx == (int)ExportFormat::Pngs) {
-        sel = pfd::select_folder("Choose output folder").result();
+        sel = dlg::selectFolder("Choose output folder");
     } else if (formatIdx == (int)ExportFormat::Csv) {
         std::vector<std::string> filters = {
             "CSV", "*.csv",
             "All Files", "*"
         };
-        sel = pfd::save_file(
-            "Save CSV", "atlas.csv", filters, pfd::opt::none).result();
+        sel = dlg::saveFile("Save CSV", "atlas.csv", filters);
     }
 
     if (!sel.empty()) {
