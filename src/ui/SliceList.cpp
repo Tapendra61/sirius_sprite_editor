@@ -6,7 +6,6 @@
 #include "ui/Palette.h"
 #include "ui/Theme.h"
 #include "imgui.h"
-#include "rlImGui.h"
 
 SliceList::SliceList() {
 }
@@ -53,22 +52,31 @@ void SliceList::draw(Editor& editor) {
 
             ImGui::TableNextRow();
 
-            // Col 0: thumbnail
+            // Col 0: thumbnail. Draw the image with ImDrawList (visual only),
+            // then claim the full kThumbBox area with a Dummy for layout. This
+            // avoids ImGui's "SetCursorPos extends boundaries — please add
+            // Dummy" warning that bare SetCursorPos + Image triggers.
             ImGui::TableSetColumnIndex(0);
             if (hasImage && s.rect.width > 0 && s.rect.height > 0) {
                 float ar = s.rect.width / s.rect.height;
                 float dw = kThumbBox, dh = kThumbBox;
                 if (ar > 1.0f) dh = kThumbBox / ar;
                 else           dw = kThumbBox * ar;
-                float padTop = (kThumbBox - dh) * 0.5f;
+                float padTop  = (kThumbBox - dh) * 0.5f;
                 float padLeft = (kThumbBox - dw) * 0.5f;
-                ImVec2 cur = ImGui::GetCursorPos();
-                ImGui::SetCursorPos(ImVec2(cur.x + padLeft, cur.y + padTop));
-                rlImGuiImageRect(&editor.project.texture, (int)dw, (int)dh, s.rect);
-                ImGui::SetCursorPos(ImVec2(cur.x, cur.y + kThumbBox));
-            } else {
-                ImGui::Dummy(ImVec2(kThumbBox, kThumbBox));
+
+                const Texture2D& tex = editor.project.texture;
+                ImVec2 cur = ImGui::GetCursorScreenPos();
+                ImVec2 imgMin(cur.x + padLeft, cur.y + padTop);
+                ImVec2 imgMax(imgMin.x + dw, imgMin.y + dh);
+                ImVec2 uv0(s.rect.x / (float)tex.width,
+                           s.rect.y / (float)tex.height);
+                ImVec2 uv1((s.rect.x + s.rect.width)  / (float)tex.width,
+                           (s.rect.y + s.rect.height) / (float)tex.height);
+                ImGui::GetWindowDrawList()->AddImage(
+                    (ImTextureID)(intptr_t)tex.id, imgMin, imgMax, uv0, uv1);
             }
+            ImGui::Dummy(ImVec2(kThumbBox, kThumbBox));
 
             // Col 1: name / rename / selectable
             ImGui::TableSetColumnIndex(1);
