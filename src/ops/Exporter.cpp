@@ -371,10 +371,3 @@ bool Exporter::exportUnityMeta(const Project& project, const std::string& path, 
 
     return atomicWrite(path, out.str());
 }
-
-bool Exporter::exportTexturePackerJson(const Project& project, const std::string& path, bool selectedOnly) {
-    (void)project;
-    (void)path;
-    (void)selectedOnly;
-    return false;  // v2
-}

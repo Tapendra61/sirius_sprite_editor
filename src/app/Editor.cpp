@@ -1,5 +1,6 @@
 #include "app/Editor.h"
 
+#include <cctype>
 #include <cstdio>
 #include <filesystem>
 #include <memory>
@@ -77,14 +78,30 @@ void Editor::update() {
 
     if (IsFileDropped()) {
         FilePathList dropped = LoadDroppedFiles();
-        TraceLog(LOG_INFO, "drag-drop: %u file(s)", dropped.count);
         if (dropped.count > 0) {
-            TraceLog(LOG_INFO, "drag-drop path: %s", dropped.paths[0]);
-            if (project.loadImage(dropped.paths[0])) {
+            std::string dropped0 = dropped.paths[0];
+
+            // Lowercase extension for the routing check (case-insensitive on
+            // Windows, where `.PNG`/`.SrSprite` are common).
+            std::string ext;
+            size_t dot = dropped0.find_last_of('.');
+            if (dot != std::string::npos) {
+                ext = dropped0.substr(dot);
+                for (size_t i = 0; i < ext.size(); ++i) {
+                    ext[i] = (char)std::tolower((unsigned char)ext[i]);
+                }
+            }
+
+            if (ext == ".srsprite") {
+                // Open as project — same path as File → Open Project.
+                openProjectPath(dropped0);
+            } else if (project.loadImage(dropped0)) {
                 view.camera.target = { 0.0f, 0.0f };
                 view.camera.zoom = 1.0f;
             } else {
-                TraceLog(LOG_WARNING, "drag-drop: loadImage failed");
+                TraceLog(LOG_WARNING,
+                         "Drag-drop: '%s' is not a supported image or .srsprite file",
+                         dropped0.c_str());
             }
         }
         UnloadDroppedFiles(dropped);
