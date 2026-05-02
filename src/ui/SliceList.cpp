@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstring>
 #include "app/Editor.h"
+#include "ui/Palette.h"
 #include "ui/Theme.h"
 #include "imgui.h"
 #include "rlImGui.h"
@@ -13,7 +14,7 @@ SliceList::SliceList() {
 SliceList::~SliceList() {
 }
 
-static const ImVec4 INK_3 = ImVec4(0.478f, 0.455f, 0.565f, 1.0f);
+using pal::INK_3;
 
 void SliceList::draw(Editor& editor) {
     ImGui::Begin("Slices");

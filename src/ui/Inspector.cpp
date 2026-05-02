@@ -5,6 +5,7 @@
 #include <memory>
 #include "app/Editor.h"
 #include "commands/SliceCommands.h"
+#include "ui/Palette.h"
 #include "ui/Theme.h"
 #include "imgui.h"
 
@@ -14,8 +15,8 @@ Inspector::Inspector() : wasActive(false), hasSnapshot(false) {
 Inspector::~Inspector() {
 }
 
-static const ImVec4 INK_3   = ImVec4(0.478f, 0.455f, 0.565f, 1.0f);  // labels / muted
-static const ImVec4 PIVOT   = ImVec4(0.961f, 0.620f, 0.420f, 1.0f);  // accent-pivot
+using pal::INK_3;
+using pal::PIVOT;
 
 static bool slicesEqual(const Slice& a, const Slice& b) {
     if (a.id != b.id) return false;

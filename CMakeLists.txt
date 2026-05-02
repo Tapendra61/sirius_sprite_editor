@@ -74,6 +74,7 @@ FetchContent_MakeAvailable(json)
 # My Binary
 add_executable(sprite_editor
     src/main.cpp
+    src/app/CanvasOptions.cpp
     src/app/Editor.cpp
     src/app/Keybindings.cpp
     src/app/Project.cpp
@@ -87,10 +88,12 @@ add_executable(sprite_editor
     src/ui/StatusBar.cpp
     src/ui/GridSliceModal.cpp
     src/ui/AutoSliceModal.cpp
+    src/ui/SliceModalUtil.cpp
     src/ui/ExportModal.cpp
     src/ui/KeybindingsModal.cpp
     src/ui/DocsWindow.cpp
     src/ui/CanvasOptionsPanel.cpp
+    src/ui/Palette.cpp
     src/ui/Theme.cpp
     src/ui/CanvasDraw.cpp
     src/ui/CanvasInput.cpp
@@ -101,10 +104,19 @@ add_executable(sprite_editor
     src/ops/Trim.cpp
     src/commands/CommandStack.cpp
     src/commands/SliceCommands.cpp
+    src/util/ConfigDir.cpp
     src/util/HitTest.cpp
+    src/util/JsonFile.cpp
 )
 target_include_directories(sprite_editor PRIVATE src ${pfd_SOURCE_DIR})
-target_compile_definitions(sprite_editor PRIVATE
-    SIRIUS_FONT_DMSANS="${CMAKE_CURRENT_SOURCE_DIR}/resources/fonts/DM_Sans/static/DMSans-Regular.ttf"
-    SIRIUS_FONT_MONO="${CMAKE_CURRENT_SOURCE_DIR}/resources/fonts/JetBrains_Mono/static/JetBrainsMono-Regular.ttf")
 target_link_libraries(sprite_editor PRIVATE rlimgui nlohmann_json::nlohmann_json)
+
+# Copy `resources/` next to the executable so relative paths work regardless
+# of the cwd the binary is launched from (Windows VS / Xcode / running from
+# build dir all just work).
+add_custom_command(TARGET sprite_editor POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_CURRENT_SOURCE_DIR}/resources"
+            "$<TARGET_FILE_DIR:sprite_editor>/resources"
+    COMMENT "Copying resources to executable directory"
+    VERBATIM)

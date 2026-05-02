@@ -41,16 +41,6 @@ bool CommandStack::canRedo() const {
     return !undone.empty();
 }
 
-const char* CommandStack::topUndoName() const {
-    if (done.empty()) return nullptr;
-    return done.back()->name();
-}
-
-const char* CommandStack::topRedoName() const {
-    if (undone.empty()) return nullptr;
-    return undone.back()->name();
-}
-
 void CommandStack::clear() {
     done.clear();
     undone.clear();

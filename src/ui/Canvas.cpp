@@ -1,10 +1,12 @@
 #include "ui/Canvas.h"
 
+#include <cfloat>
 #include "app/Editor.h"
 #include "imgui.h"
 #include "rlImGui.h"
 #include "ui/CanvasDraw.h"
 #include "ui/CanvasInput.h"
+#include "ui/Theme.h"
 #include "util/HitTest.h"
 
 Canvas::Canvas() : rt{}, rtWidth(0), rtHeight(0) {
@@ -25,11 +27,16 @@ static void resizeRenderTexture(RenderTexture2D& rt, int& rtWidth, int& rtHeight
     rtHeight = h;
 }
 
-static void drawEmptyStateMessage(int w, int h) {
+static void drawEmptyStateOverlay(ImVec2 panelOrigin, int w, int h) {
     const char* msg = "Drop an image file here to start";
-    int fontSize = 20;
-    int textW = MeasureText(msg, fontSize);
-    DrawText(msg, (w - textW) / 2, h / 2 - fontSize / 2, fontSize, LIGHTGRAY);
+    ImFont* font = g_FontMain ? g_FontMain : ImGui::GetFont();
+    float fontSize = 32.0f;
+
+    ImVec2 sz = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, msg);
+    ImVec2 pos(panelOrigin.x + (w - sz.x) * 0.5f,
+               panelOrigin.y + (h - sz.y) * 0.5f);
+    ImU32 col = IM_COL32(176, 171, 189, 220);  // ink-2
+    ImGui::GetWindowDrawList()->AddText(font, fontSize, pos, col, msg);
 }
 
 void Canvas::draw(Editor& editor) {
@@ -73,14 +80,15 @@ void Canvas::draw(Editor& editor) {
 
         drawSliceHandles(editor);
         drawSlicePivots(editor);
-
-        if (!editor.project.isImageLoaded()) {
-            drawEmptyStateMessage(w, h);
-        }
     EndTextureMode();
 
     rlImGuiImageRenderTexture(&rt);
     bool canvasHovered = ImGui::IsItemHovered();
+
+    // Overlay the empty-state message via ImGui (renders at proper HIDPI density).
+    if (!editor.project.isImageLoaded()) {
+        drawEmptyStateOverlay(cursorScreen, w, h);
+    }
 
     handleCanvasMouse(editor, canvasHovered);
     handleCanvasPanZoom(editor, canvasHovered);

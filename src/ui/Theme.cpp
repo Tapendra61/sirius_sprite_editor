@@ -1,5 +1,6 @@
 #include "ui/Theme.h"
 
+#include <string>
 #include "imgui.h"
 #include "raylib.h"
 
@@ -27,12 +28,14 @@ void LoadFonts() {
     cfg.PixelSnapH = true;
     cfg.RasterizerDensity = density;
 
-#ifdef SIRIUS_FONT_DMSANS
-    g_FontMain = io.Fonts->AddFontFromFileTTF(SIRIUS_FONT_DMSANS, 19.0f, &cfg);
-#endif
-#ifdef SIRIUS_FONT_MONO
-    g_FontMono = io.Fonts->AddFontFromFileTTF(SIRIUS_FONT_MONO, 17.0f, &cfg);
-#endif
+    // Resolve font paths relative to the executable so the same binary works
+    // whether launched from the project root, the build dir, or after install.
+    std::string baseDir = GetApplicationDirectory();
+    std::string mainPath = baseDir + "resources/fonts/DM_Sans/static/DMSans-Regular.ttf";
+    std::string monoPath = baseDir + "resources/fonts/JetBrains_Mono/static/JetBrainsMono-Regular.ttf";
+
+    g_FontMain = io.Fonts->AddFontFromFileTTF(mainPath.c_str(), 19.0f, &cfg);
+    g_FontMono = io.Fonts->AddFontFromFileTTF(monoPath.c_str(), 17.0f, &cfg);
 
     if (g_FontMain == nullptr) {
         g_FontMain = io.Fonts->AddFontDefault();
@@ -74,7 +77,7 @@ void ApplyDarkTheme() {
 
     // Alignment
     s.WindowTitleAlign         = ImVec2(0.0f, 0.5f);
-    s.WindowMenuButtonPosition = ImGuiDir_Right;
+    s.WindowMenuButtonPosition = ImGuiDir_None;  // hide the per-panel "v" menu
     s.ButtonTextAlign          = ImVec2(0.5f, 0.5f);
 
     // Surface ladder
@@ -89,15 +92,10 @@ void ApplyDarkTheme() {
     // Borders
     ImVec4 border       = RGB( 42,  42,  61, 255); // #2A2A3D
     ImVec4 border2      = RGB( 54,  54,  80, 255); // #363650
-    ImVec4 borderStrong = RGB( 74,  74, 102, 255); // #4A4A66
-    (void)borderStrong;
 
     // Ink
     ImVec4 ink         = RGB(232, 230, 240, 255); // #E8E6F0
-    ImVec4 ink2        = RGB(176, 171, 189, 255); // #B0ABBD
-    ImVec4 ink3        = RGB(122, 116, 144, 255); // #7A7490
     ImVec4 inkDisabled = RGB( 74,  70,  88, 255); // #4A4658
-    (void)ink2; (void)ink3;
 
     // Accent — indigo selection
     ImVec4 accentSel       = RGB(129, 140, 248, 255); // #818CF8

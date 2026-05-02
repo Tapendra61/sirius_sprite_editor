@@ -2,15 +2,47 @@
 
 #include <cfloat>
 #include <cstdio>
+#include <string>
 #include "app/Editor.h"
 #include "ui/Theme.h"
 #include "imgui.h"
 #include "imgui_internal.h"
 
-Toolbar::Toolbar() : mode(ToolMode::Select) {
+Toolbar::Toolbar()
+    : mode(ToolMode::Select),
+      iconCmd{}, iconShift{},
+      iconToolSelect{}, iconToolMove{}, iconToolRect{} {
 }
 
 Toolbar::~Toolbar() {
+}
+
+void Toolbar::loadIcons() {
+    // Resolve relative to the executable directory so resources copied
+    // post-build are found regardless of cwd.
+    std::string base = GetApplicationDirectory();
+    auto load = [&](const char* rel) {
+        return LoadTexture((base + "resources/icons/" + rel).c_str());
+    };
+    iconCmd        = load("command-key.png");
+    iconShift      = load("shift-key.png");
+    iconToolSelect = load("selection-tool.png");
+    iconToolMove   = load("move-tool.png");
+    iconToolRect   = load("rect-tool.png");
+    if (iconCmd.id != 0)        SetTextureFilter(iconCmd,        TEXTURE_FILTER_BILINEAR);
+    if (iconShift.id != 0)      SetTextureFilter(iconShift,      TEXTURE_FILTER_BILINEAR);
+    if (iconToolSelect.id != 0) SetTextureFilter(iconToolSelect, TEXTURE_FILTER_BILINEAR);
+    if (iconToolMove.id != 0)   SetTextureFilter(iconToolMove,   TEXTURE_FILTER_BILINEAR);
+    if (iconToolRect.id != 0)   SetTextureFilter(iconToolRect,   TEXTURE_FILTER_BILINEAR);
+}
+
+void Toolbar::unloadIcons() {
+    if (iconCmd.id != 0)        UnloadTexture(iconCmd);
+    if (iconShift.id != 0)      UnloadTexture(iconShift);
+    if (iconToolSelect.id != 0) UnloadTexture(iconToolSelect);
+    if (iconToolMove.id != 0)   UnloadTexture(iconToolMove);
+    if (iconToolRect.id != 0)   UnloadTexture(iconToolRect);
+    iconCmd = iconShift = iconToolSelect = iconToolMove = iconToolRect = Texture2D{};
 }
 
 static const ImU32 ACCENT_SEL       = IM_COL32(129, 140, 248, 255);
@@ -180,27 +212,27 @@ void Toolbar::draw(Editor& editor) {
         return;
     }
 
-    if (toolButton("Select", "V", editor.iconToolSelect, mode == ToolMode::Select)) {
+    if (toolButton("Select", "V", iconToolSelect, mode == ToolMode::Select)) {
         mode = ToolMode::Select;
     }
     ImGui::SameLine();
-    if (toolButton("Move",   "H", editor.iconToolMove,   mode == ToolMode::Move)) {
+    if (toolButton("Move",   "H", iconToolMove,   mode == ToolMode::Move)) {
         mode = ToolMode::Move;
     }
     ImGui::SameLine();
-    if (toolButton("Rect",   "R", editor.iconToolRect,   mode == ToolMode::Rectangle)) {
+    if (toolButton("Rect",   "R", iconToolRect,   mode == ToolMode::Rectangle)) {
         mode = ToolMode::Rectangle;
     }
 
     verticalSep();
 
     bool hasImage  = editor.project.isImageLoaded();
-    if (actionButton("Grid Slice", editor.iconCmd, editor.iconShift,
+    if (actionButton("Grid Slice", iconCmd, iconShift,
                      'G', false, !hasImage)) {
         editor.gridModal.open();
     }
     ImGui::SameLine();
-    if (actionButton("Auto Slice", editor.iconCmd, editor.iconShift,
+    if (actionButton("Auto Slice", iconCmd, iconShift,
                      'A', true, !hasImage)) {
         editor.autoModal.open();
     }
@@ -208,7 +240,7 @@ void Toolbar::draw(Editor& editor) {
     verticalSep();
 
     bool hasSlices = editor.project.slices.count() > 0;
-    if (actionButton("Export", editor.iconCmd, editor.iconShift,
+    if (actionButton("Export", iconCmd, iconShift,
                      'E', false, !hasSlices)) {
         editor.exportModal.open();
     }

@@ -1,8 +1,6 @@
 #ifndef SIRIUS_SLICE_LIST_H
 #define SIRIUS_SLICE_LIST_H
 
-#include <string>
-
 class Editor;
 
 class SliceList {
@@ -13,7 +11,6 @@ public:
     void draw(Editor& editor);
 
 private:
-    std::string searchText;
     int  renamingId = 0;
     char renameBuffer[128] = {0};
     bool renameFocusPending = false;

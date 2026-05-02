@@ -16,6 +16,10 @@ struct CanvasOptions {
     // Pixel grid overlay (1-px lines at every integer pixel boundary).
     bool  pixelGridVisible  = false;
     float pixelGridZoomMin  = 4.0f;  // Only render when zoom >= this.
+
+    // Persistence (canvas_options.json next to the executable).
+    bool save() const;
+    bool load();
 };
 
 #endif

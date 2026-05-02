@@ -13,9 +13,7 @@ enum class HandleId {
     NW, N, NE,
     E,
     SE, S, SW,
-    W,
-    Pivot,
-    BorderL, BorderT, BorderR, BorderB
+    W
 };
 
 struct Hit {

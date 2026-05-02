@@ -1,6 +1,5 @@
 #include "ui/AutoSliceModal.h"
 
-#include <cstdio>
 #include <cstring>
 #include <memory>
 #include <string>
@@ -8,6 +7,7 @@
 #include "commands/SliceCommands.h"
 #include "imgui.h"
 #include "ops/AutoSlicer.h"
+#include "ui/SliceModalUtil.h"
 #include "ui/Theme.h"
 
 AutoSliceModal::AutoSliceModal()
@@ -24,49 +24,12 @@ AutoSliceModal::AutoSliceModal()
     namePattern[sizeof(namePattern) - 1] = '\0';
 }
 
-static std::string expandPattern(const std::string& pat, int idx, int total) {
-    int width = 1;
-    int t = total;
-    while (t >= 10) { t /= 10; ++width; }
-
-    std::string out;
-    out.reserve(pat.size() + 8);
-    char buf[32];
-
-    for (size_t k = 0; k < pat.size(); ++k) {
-        if (pat[k] == '{' && k + 2 < pat.size() && pat[k + 2] == '}') {
-            char tok = pat[k + 1];
-            if (tok == 'i') {
-                std::snprintf(buf, sizeof(buf), "%0*d", width, idx);
-                out += buf;
-                k += 2;
-                continue;
-            }
-        }
-        out += pat[k];
-    }
-    return out;
-}
-
 AutoSliceModal::~AutoSliceModal() {
 }
 
 void AutoSliceModal::open() {
     openRequested = true;
     needsRecompute = true;
-}
-
-static void rebuildPreviewSlices(std::vector<Slice>& preview, const std::vector<Rectangle>& rects) {
-    preview.clear();
-    preview.reserve(rects.size());
-    for (size_t i = 0; i < rects.size(); ++i) {
-        Slice s;
-        s.id = -1;
-        s.rect = rects[i];
-        s.pivot = { 0.5f, 0.5f };
-        s.border = { 0.0f, 0.0f, 0.0f, 0.0f };
-        preview.push_back(s);
-    }
 }
 
 void AutoSliceModal::draw(Editor& editor) {
@@ -115,7 +78,7 @@ void AutoSliceModal::draw(Editor& editor) {
         p.padding        = padding;
         p.eightConnected = eightConnected;
         cachedRects = autoSlice(editor.project.image, p);
-        rebuildPreviewSlices(preview, cachedRects);
+        buildPreviewSlices(preview, cachedRects);
         needsRecompute = false;
     } else if (!editor.project.isImageLoaded()) {
         cachedRects.clear();
@@ -151,7 +114,7 @@ void AutoSliceModal::draw(Editor& editor) {
         for (size_t i = 0; i < cachedRects.size(); ++i) {
             Slice s;
             s.id = editor.project.nextId();
-            s.name = expandPattern(pattern, (int)i + 1, total);
+            s.name = expandNamePattern(pattern, (int)i + 1, 0, 0, total);
             s.rect = cachedRects[i];
             s.pivot = { 0.5f, 0.5f };
             s.border = { 0.0f, 0.0f, 0.0f, 0.0f };

@@ -6,6 +6,7 @@
 #include "app/Keybindings.h"
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "ui/Palette.h"
 
 KeybindingsModal::KeybindingsModal()
     : showing(false),
@@ -21,7 +22,7 @@ void KeybindingsModal::open() {
     recordingActionIdx = -1;
 }
 
-static const ImVec4 INK_3 = ImVec4(0.478f, 0.455f, 0.565f, 1.0f);
+using pal::INK_3;
 
 static ImGuiKey captureNonModKey() {
     for (int k = ImGuiKey_A; k <= ImGuiKey_Z; ++k) {

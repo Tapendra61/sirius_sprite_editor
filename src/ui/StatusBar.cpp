@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <filesystem>
 #include "app/Editor.h"
+#include "ui/Palette.h"
 #include "ui/Theme.h"
 #include "util/Coords.h"
 #include "imgui.h"
@@ -14,10 +15,10 @@ StatusBar::StatusBar() {
 StatusBar::~StatusBar() {
 }
 
-static const ImVec4 INK     = ImVec4(0.910f, 0.902f, 0.941f, 1.0f);  // #E8E6F0
-static const ImVec4 INK_2   = ImVec4(0.690f, 0.671f, 0.741f, 1.0f);  // #B0ABBD
-static const ImVec4 INK_3   = ImVec4(0.478f, 0.455f, 0.565f, 1.0f);  // #7A7490
-static const ImVec4 PIVOT   = ImVec4(0.961f, 0.620f, 0.420f, 1.0f);  // #F59E6B
+using pal::INK;
+using pal::INK_2;
+using pal::INK_3;
+using pal::PIVOT;
 
 static void statusSep() {
     ImGui::SameLine(0.0f, 6.0f);

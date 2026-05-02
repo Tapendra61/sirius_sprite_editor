@@ -6,9 +6,9 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <system_error>
 #include <vector>
 #include "app/Project.h"
+#include "util/JsonFile.h"
 #include "model/Slice.h"
 #include "raylib.h"
 
@@ -54,20 +54,7 @@ static std::string sanitizeFilename(const std::string& name) {
 }
 
 static bool atomicWrite(const std::string& path, const std::string& contents) {
-    std::string tmp = path + ".tmp";
-    {
-        std::ofstream out(tmp, std::ios::binary);
-        if (!out.is_open()) return false;
-        out.write(contents.data(), (std::streamsize)contents.size());
-        if (out.fail()) return false;
-    }
-    std::error_code ec;
-    std::filesystem::rename(tmp, path, ec);
-    if (ec) {
-        std::filesystem::remove(tmp, ec);
-        return false;
-    }
-    return true;
+    return writeFileAtomic(path, contents).empty();
 }
 
 static std::vector<Slice> selectSlicesForExport(const Project& project, bool selectedOnly) {

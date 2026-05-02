@@ -3,12 +3,12 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
-#include <system_error>
 #include <nlohmann/json.hpp>
 #include "app/Project.h"
 #include "model/Slice.h"
 #include "raylib.h"
 #include "util/Coords.h"
+#include "util/JsonFile.h"
 
 using json = nlohmann::json;
 
@@ -85,23 +85,6 @@ bool Importer::loadProject(Project& project, CanvasView& view, const std::string
     return true;
 }
 
-static std::string atomicWriteJson(const std::string& path, const std::string& contents) {
-    std::string tmp = path + ".tmp";
-    {
-        std::ofstream out(tmp);
-        if (!out.is_open()) return "could not open temp file";
-        out << contents;
-        if (out.fail()) return "write failed";
-    }
-    std::error_code ec;
-    std::filesystem::rename(tmp, path, ec);
-    if (ec) {
-        std::filesystem::remove(tmp, ec);
-        return "rename failed";
-    }
-    return "";  // success
-}
-
 bool Importer::saveProject(const Project& project, const CanvasView& view, const std::string& path) {
     // Image path relative to the project file (forward slashes for portability)
     std::string imageRel;
@@ -154,6 +137,6 @@ bool Importer::saveProject(const Project& project, const CanvasView& view, const
         j["slices"].push_back(sj);
     }
 
-    std::string err = atomicWriteJson(path, j.dump(2));
+    std::string err = writeFileAtomic(path, j.dump(2));
     return err.empty();
 }

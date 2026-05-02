@@ -1,6 +1,7 @@
 #include "ui/DocsWindow.h"
 
 #include "imgui.h"
+#include "ui/Palette.h"
 #include "ui/Theme.h"
 
 DocsWindow::DocsWindow() : visible(false), selectedSection(0) {
@@ -13,9 +14,9 @@ void DocsWindow::show() {
     visible = true;
 }
 
-static const ImVec4 INK_2 = ImVec4(0.690f, 0.671f, 0.741f, 1.0f);
-static const ImVec4 INK_3 = ImVec4(0.478f, 0.455f, 0.565f, 1.0f);
-static const ImVec4 ACCENT = ImVec4(0.506f, 0.549f, 0.973f, 1.0f); // #818CF8
+using pal::INK_2;
+using pal::INK_3;
+using pal::ACCENT;
 
 static void heading(const char* text) {
     ImGui::Spacing();
@@ -287,7 +288,9 @@ void DocsWindow::draw() {
     if (!visible) return;
 
     ImGui::SetNextWindowSize(ImVec2(820.0f, 620.0f), ImGuiCond_FirstUseEver);
-    if (!ImGui::Begin("Documentation", &visible)) {
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoDocking
+                           | ImGuiWindowFlags_NoCollapse;
+    if (!ImGui::Begin("Documentation", &visible, flags)) {
         ImGui::End();
         return;
     }

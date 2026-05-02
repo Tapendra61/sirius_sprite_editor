@@ -21,9 +21,6 @@ public:
     bool canUndo() const;
     bool canRedo() const;
 
-    const char* topUndoName() const;
-    const char* topRedoName() const;
-
     void clear();
 
 private:

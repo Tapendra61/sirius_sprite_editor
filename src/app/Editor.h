@@ -90,12 +90,6 @@ public:
     KeybindingsModal   keybindingsModal;
     DocsWindow         docsWindow;
     CanvasOptionsPanel canvasOptionsPanel;
-
-    Texture2D iconCmd;
-    Texture2D iconShift;
-    Texture2D iconToolSelect;
-    Texture2D iconToolMove;
-    Texture2D iconToolRect;
 };
 
 #endif

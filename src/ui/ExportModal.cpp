@@ -8,6 +8,7 @@
 #include "imgui.h"
 #include "ops/Exporter.h"
 #include "portable-file-dialogs.h"
+#include "ui/Palette.h"
 #include "ui/Theme.h"
 
 ExportModal::ExportModal()
@@ -54,7 +55,7 @@ static void runBrowse(int formatIdx, char* pathBuf, size_t cap) {
     }
 }
 
-static const ImVec4 INK_3 = ImVec4(0.478f, 0.455f, 0.565f, 1.0f);
+using pal::INK_3;
 
 void ExportModal::draw(Editor& editor) {
     if (openRequested) {

@@ -1,13 +1,13 @@
 #include "app/Keybindings.h"
 
-#include <filesystem>
 #include <fstream>
-#include <system_error>
 #include <nlohmann/json.hpp>
+#include "util/ConfigDir.h"
+#include "util/JsonFile.h"
 
 using json = nlohmann::json;
 
-static const char* CONFIG_PATH = "keybindings.json";
+static const char* CONFIG_NAME = "keybindings.json";
 static const int   CONFIG_VERSION = 1;
 
 static const ActionDef ACTION_TABLE[] = {
@@ -91,25 +91,11 @@ bool Keybindings::save() const {
         j["bindings"][ACTION_TABLE[i].id] = (int)chords_[i];
     }
 
-    // Atomic-ish write: tmp + rename
-    std::string tmp = std::string(CONFIG_PATH) + ".tmp";
-    {
-        std::ofstream out(tmp);
-        if (!out.is_open()) return false;
-        out << j.dump(2);
-        if (out.fail()) return false;
-    }
-    std::error_code ec;
-    std::filesystem::rename(tmp, CONFIG_PATH, ec);
-    if (ec) {
-        std::filesystem::remove(tmp, ec);
-        return false;
-    }
-    return true;
+    return writeFileAtomic(configPath(CONFIG_NAME), j.dump(2)).empty();
 }
 
 bool Keybindings::load() {
-    std::ifstream in(CONFIG_PATH);
+    std::ifstream in(configPath(CONFIG_NAME));
     if (!in.is_open()) return false;
 
     json j = json::parse(in, nullptr, false);

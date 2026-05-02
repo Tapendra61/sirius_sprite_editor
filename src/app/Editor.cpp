@@ -49,24 +49,12 @@ Editor::Editor() : shouldExit(false), resetLayoutRequested(false) {
     drag.cycleNextId = -1;
     drag.hoveredSliceId = -1;
 
-    iconCmd        = LoadTexture("resources/icons/command-key.png");
-    iconShift      = LoadTexture("resources/icons/shift-key.png");
-    iconToolSelect = LoadTexture("resources/icons/selection-tool.png");
-    iconToolMove   = LoadTexture("resources/icons/move-tool.png");
-    iconToolRect   = LoadTexture("resources/icons/rect-tool.png");
-    if (iconCmd.id != 0)        SetTextureFilter(iconCmd,        TEXTURE_FILTER_BILINEAR);
-    if (iconShift.id != 0)      SetTextureFilter(iconShift,      TEXTURE_FILTER_BILINEAR);
-    if (iconToolSelect.id != 0) SetTextureFilter(iconToolSelect, TEXTURE_FILTER_BILINEAR);
-    if (iconToolMove.id != 0)   SetTextureFilter(iconToolMove,   TEXTURE_FILTER_BILINEAR);
-    if (iconToolRect.id != 0)   SetTextureFilter(iconToolRect,   TEXTURE_FILTER_BILINEAR);
+    toolbar.loadIcons();
+    canvasOptions.load();  // Restore from canvas_options.json if present.
 }
 
 Editor::~Editor() {
-    if (iconCmd.id != 0)        UnloadTexture(iconCmd);
-    if (iconShift.id != 0)      UnloadTexture(iconShift);
-    if (iconToolSelect.id != 0) UnloadTexture(iconToolSelect);
-    if (iconToolMove.id != 0)   UnloadTexture(iconToolMove);
-    if (iconToolRect.id != 0)   UnloadTexture(iconToolRect);
+    toolbar.unloadIcons();
 }
 
 static void updateWindowTitle(const Project& project) {
@@ -285,12 +273,17 @@ void Editor::trimSelected() {
     if (project.slices.selectedIds.empty()) return;
     if (!project.isImageLoaded()) return;
 
+    // Decode the image to RGBA8 once, then run trim against every selected slice.
+    Color* pixels = LoadImageColors(project.image);
+    if (pixels == nullptr) return;
+
     std::vector<Slice> before;
     std::vector<Slice> after;
     for (size_t i = 0; i < project.slices.selectedIds.size(); ++i) {
         const Slice* s = project.slices.find(project.slices.selectedIds[i]);
         if (s == nullptr) continue;
-        Rectangle trimmed = trimTransparentEdges(project.image, s->rect, 0);
+        Rectangle trimmed = trimTransparentEdges(
+            pixels, project.image.width, project.image.height, s->rect, 0);
         if (trimmed.x == s->rect.x && trimmed.y == s->rect.y &&
             trimmed.width == s->rect.width && trimmed.height == s->rect.height) {
             continue;
@@ -300,6 +293,8 @@ void Editor::trimSelected() {
         updated.rect = trimmed;
         after.push_back(updated);
     }
+    UnloadImageColors(pixels);
+
     if (before.empty()) return;
 
     std::unique_ptr<EditSlicesCommand> cmd(new EditSlicesCommand(before, after));
