@@ -29,7 +29,17 @@ void ExportModal::open() {
     lastResultShown = false;
 }
 
-static void runBrowse(int formatIdx, char* pathBuf, size_t cap) {
+static std::string defaultMetaName(const std::string& imagePath) {
+    if (imagePath.empty()) return "sprites.png.meta";
+    // Strip the directory; keep the filename + ".meta".
+    size_t slash = imagePath.find_last_of("/\\");
+    std::string base = (slash == std::string::npos)
+        ? imagePath : imagePath.substr(slash + 1);
+    return base + ".meta";
+}
+
+static void runBrowse(int formatIdx, const std::string& imagePath,
+                      char* pathBuf, size_t cap) {
     std::string sel;
     if (formatIdx == (int)ExportFormat::AtlasJson) {
         std::vector<std::string> filters = {
@@ -45,6 +55,13 @@ static void runBrowse(int formatIdx, char* pathBuf, size_t cap) {
             "All Files", "*"
         };
         sel = dlg::saveFile("Save CSV", "atlas.csv", filters);
+    } else if (formatIdx == (int)ExportFormat::UnityMeta) {
+        std::vector<std::string> filters = {
+            "Unity Meta", "*.meta",
+            "All Files", "*"
+        };
+        sel = dlg::saveFile("Save Unity Sprite Meta",
+                            defaultMetaName(imagePath), filters);
     }
 
     if (!sel.empty()) {
@@ -68,15 +85,21 @@ void ExportModal::draw(Editor& editor) {
     }
 
     // Format
+    bool hasImage = editor.project.isImageLoaded();
+
     ImGui::TextColored(INK_3, "FORMAT");
     ImGui::RadioButton("Atlas JSON (custom schema, default)", &formatIdx, (int)ExportFormat::AtlasJson);
     ImGui::RadioButton("Individual PNGs (one file per slice)", &formatIdx, (int)ExportFormat::Pngs);
     ImGui::RadioButton("CSV", &formatIdx, (int)ExportFormat::Csv);
-    ImGui::BeginDisabled();
-    int dummy = -1;
-    ImGui::RadioButton("Unity Sprite Meta (v2)", &dummy, 99);
-    ImGui::RadioButton("TexturePacker JSON (v2)", &dummy, 99);
-    ImGui::EndDisabled();
+
+    if (!hasImage) ImGui::BeginDisabled();
+    ImGui::RadioButton("Unity Sprite Meta (.png.meta)", &formatIdx, (int)ExportFormat::UnityMeta);
+    if (!hasImage) {
+        ImGui::EndDisabled();
+        if (formatIdx == (int)ExportFormat::UnityMeta) {
+            formatIdx = (int)ExportFormat::AtlasJson;
+        }
+    }
 
     ImGui::Spacing();
     ImGui::Separator();
@@ -89,7 +112,7 @@ void ExportModal::draw(Editor& editor) {
     ImGui::PopItemWidth();
     ImGui::SameLine();
     if (ImGui::Button("Browse...")) {
-        runBrowse(formatIdx, pathBuf, sizeof(pathBuf));
+        runBrowse(formatIdx, editor.project.imagePath, pathBuf, sizeof(pathBuf));
     }
 
     ImGui::Spacing();
@@ -149,6 +172,9 @@ void ExportModal::draw(Editor& editor) {
                 break;
             case ExportFormat::Csv:
                 ok = Exporter::exportCsv(editor.project, path, selectedOnly);
+                break;
+            case ExportFormat::UnityMeta:
+                ok = Exporter::exportUnityMeta(editor.project, path, selectedOnly);
                 break;
         }
         lastResultShown = true;

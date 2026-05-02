@@ -106,6 +106,7 @@ add_executable(sprite_editor
     src/commands/SliceCommands.cpp
     src/util/ConfigDir.cpp
     src/util/FileDialog.cpp
+    src/util/Guid.cpp
     src/util/HitTest.cpp
     src/util/JsonFile.cpp
 )

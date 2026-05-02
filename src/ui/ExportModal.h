@@ -8,7 +8,8 @@ class Editor;
 enum class ExportFormat {
     AtlasJson = 0,
     Pngs      = 1,
-    Csv       = 2
+    Csv       = 2,
+    UnityMeta = 3
 };
 
 class ExportModal {
