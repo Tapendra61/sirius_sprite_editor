@@ -1,5 +1,6 @@
 #include "ui/SliceList.h"
 
+#include <cctype>
 #include <cstdio>
 #include <cstring>
 #include "app/Editor.h"
@@ -15,6 +16,87 @@ SliceList::~SliceList() {
 
 using pal::INK_3;
 
+// Case-insensitive substring match. Empty `needle` matches everything.
+static bool nameMatches(const std::string& name, const char* needle) {
+    if (needle == nullptr || needle[0] == '\0') return true;
+    if (name.empty()) return false;
+    size_t hayLen = name.size();
+    size_t nLen = std::strlen(needle);
+    if (nLen > hayLen) return false;
+    for (size_t i = 0; i + nLen <= hayLen; ++i) {
+        bool ok = true;
+        for (size_t j = 0; j < nLen; ++j) {
+            unsigned char a = (unsigned char)name[i + j];
+            unsigned char b = (unsigned char)needle[j];
+            if (std::tolower(a) != std::tolower(b)) { ok = false; break; }
+        }
+        if (ok) return true;
+    }
+    return false;
+}
+
+// Pill-style search field with a leading magnifier glyph and a clear button on
+// the right when the buffer is non-empty. Uses ImDrawList for the magnifier so
+// it stays sharp at any DPI without needing an icon font.
+static void drawSearchField(char* buf, size_t cap) {
+    ImGuiStyle& style = ImGui::GetStyle();
+    float h = ImGui::GetFontSize() + 12.0f;       // taller than default
+    float availW = ImGui::GetContentRegionAvail().x;
+
+    // Reserve space for an inline clear button when the buffer has text.
+    bool hasText = buf[0] != '\0';
+    float clearW = hasText ? (h - 4.0f) : 0.0f;
+    float gap    = hasText ? 6.0f : 0.0f;
+    float inputW = availW - clearW - gap;
+
+    // Style: rounded pill, soft border, indigo focus ring.
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, h * 0.5f);
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,  ImVec2(h * 0.5f + 4.0f, 6.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
+    ImGui::PushStyleColor(ImGuiCol_FrameBg,        IM_COL32(15, 15, 22, 255));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, IM_COL32(20, 20, 30, 255));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgActive,  IM_COL32(20, 20, 30, 255));
+    ImGui::PushStyleColor(ImGuiCol_Border,         IM_COL32(42, 42, 61, 255));
+
+    ImVec2 cur = ImGui::GetCursorScreenPos();
+
+    ImGui::PushItemWidth(inputW);
+    ImGui::InputTextWithHint("##slice_search", "Search slices...",
+                             buf, cap);
+    ImGui::PopItemWidth();
+
+    // Magnifier glyph drawn over the input's left padding (purely visual).
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+    float gx = cur.x + 12.0f;
+    float gy = cur.y + h * 0.5f;
+    float r  = 4.5f;
+    ImU32 glyph = IM_COL32(122, 116, 144, 255);  // ink-3
+    dl->AddCircle(ImVec2(gx, gy), r, glyph, 16, 1.5f);
+    dl->AddLine(ImVec2(gx + r * 0.7f, gy + r * 0.7f),
+                ImVec2(gx + r * 0.7f + 4.0f, gy + r * 0.7f + 4.0f),
+                glyph, 1.5f);
+
+    ImGui::PopStyleColor(4);
+    ImGui::PopStyleVar(3);
+
+    // Clear button (×).
+    if (hasText) {
+        ImGui::SameLine(0.0f, gap);
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, (h - 4.0f) * 0.5f);
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,  ImVec2(0.0f, 0.0f));
+        ImGui::PushStyleColor(ImGuiCol_Button,        IM_COL32(20, 20, 30, 255));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(40, 40, 60, 255));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,  IM_COL32(50, 50, 70, 255));
+        ImGui::PushStyleColor(ImGuiCol_Text,          IM_COL32(176, 171, 189, 255));
+        if (ImGui::Button("\xc3\x97", ImVec2(clearW, h - 4.0f))) {  // ×
+            buf[0] = '\0';
+        }
+        ImGui::PopStyleColor(4);
+        ImGui::PopStyleVar(2);
+    }
+    (void)style;
+}
+
 void SliceList::draw(Editor& editor) {
     ImGui::Begin("Slices");
 
@@ -22,15 +104,35 @@ void SliceList::draw(Editor& editor) {
     int selCount = editor.project.slices.selectionCount();
 
     if (total == 0) {
+        searchBuf[0] = '\0';
         ImGui::TextColored(INK_3, "No Slices Created");
         ImGui::End();
         return;
     }
 
-    ImGui::TextColored(INK_3, "%d slice%s%s%d selected",
-                       total, total == 1 ? "" : "s",
-                       selCount > 0 ? "  \xc2\xb7  " : "  \xc2\xb7  ",
-                       selCount);
+    // Search / filter input.
+    drawSearchField(searchBuf, sizeof(searchBuf));
+    ImGui::Spacing();
+
+    bool searching = searchBuf[0] != '\0';
+
+    // Pre-count matches so we can show "X of Y" when the search is active.
+    int matchCount = 0;
+    if (searching) {
+        const std::vector<Slice>& all = editor.project.slices.slices;
+        for (size_t i = 0; i < all.size(); ++i) {
+            if (nameMatches(all[i].name, searchBuf)) ++matchCount;
+        }
+    }
+
+    if (searching) {
+        ImGui::TextColored(INK_3, "%d of %d slice%s  \xc2\xb7  %d selected",
+                           matchCount, total,
+                           total == 1 ? "" : "s", selCount);
+    } else {
+        ImGui::TextColored(INK_3, "%d slice%s  \xc2\xb7  %d selected",
+                           total, total == 1 ? "" : "s", selCount);
+    }
     ImGui::Separator();
 
     ImGuiTableFlags tableFlags = ImGuiTableFlags_RowBg
@@ -48,6 +150,7 @@ void SliceList::draw(Editor& editor) {
         const std::vector<Slice>& slices = editor.project.slices.slices;
         for (size_t i = 0; i < slices.size(); ++i) {
             const Slice& s = slices[i];
+            if (searching && !nameMatches(s.name, searchBuf)) continue;
             bool sel = editor.project.slices.isSelected(s.id);
 
             ImGui::TableNextRow();

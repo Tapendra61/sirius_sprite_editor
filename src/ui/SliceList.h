@@ -15,6 +15,8 @@ private:
     char renameBuffer[128] = {0};
     bool renameFocusPending = false;
     int  contextMenuId = 0;
+
+    char searchBuf[128] = {0};
 };
 
 #endif
