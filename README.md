@@ -26,9 +26,11 @@ You need a C++17 compiler, CMake ≥ 3.16, and Git.
 - CMake: `brew install cmake`
 
 ### Windows
-- Visual Studio 2022 (Community Edition is fine) with the **Desktop development with C++** workload
+- Visual Studio 2022 Build Tools (or Community Edition) with the **Desktop development with C++** workload — provides the MSVC compiler and Ninja
 - CMake (bundled with VS, or install from [cmake.org](https://cmake.org/download/))
 - Git for Windows
+
+> Ninja ships inside the VS workload. If you installed CMake separately and don't have Ninja, get it via `winget install Ninja-build.Ninja` or [ninja-build.org](https://ninja-build.org/).
 
 ### Linux (bonus — should work, untested)
 - `sudo apt install build-essential cmake git libgl1-mesa-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev`
@@ -51,15 +53,17 @@ cmake --build build -j
 
 ### Windows
 
+Open the **Developer Command Prompt for VS 2022** (or **Developer PowerShell**) so the MSVC compiler is on `PATH`, then:
+
 ```cmd
 git clone <repo-url> sirius_sprite_editor
 cd sirius_sprite_editor
-cmake -S . -B build -G "Visual Studio 17 2022"
-cmake --build build --config Release
-build\Release\sprite_editor.exe
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+build\sprite_editor.exe
 ```
 
-Or open `build\sprite_editor.sln` in Visual Studio after the configure step and build / debug from there.
+Ninja produces a single executable at `build\sprite_editor.exe` — no `.sln`, no `Release\` subfolder.
 
 ### Linux
 
