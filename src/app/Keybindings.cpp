@@ -56,7 +56,19 @@ bool Keybindings::isPressed(Action a) const {
     if (idx < 0 || idx >= (int)Action::Count) return false;
     ImGuiKeyChord chord = chords_[idx];
     if (chord == ImGuiKey_None) return false;
-    return ImGui::IsKeyChordPressed(chord);
+
+    if (ImGui::IsKeyChordPressed(chord)) return true;
+
+    // Apple keyboards label their main keyboard key "delete" but it actually
+    // sends Backspace — true Forward-Delete is Fn+delete or only present on
+    // extended keyboards. When the user has the default Delete chord, accept
+    // Backspace too so the obvious key works on Mac. (No-op on Windows/Linux:
+    // pressing Backspace there is rare for "delete selection" and users who
+    // remap Action::Delete to something else don't get this fallback.)
+    if (a == Action::Delete && chord == ImGuiKey_Delete) {
+        if (ImGui::IsKeyChordPressed(ImGuiKey_Backspace)) return true;
+    }
+    return false;
 }
 
 ImGuiKeyChord Keybindings::getChord(Action a) const {

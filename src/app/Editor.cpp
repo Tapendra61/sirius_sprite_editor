@@ -141,11 +141,16 @@ void Editor::update() {
 
     bool hasSelection = !project.slices.selectedIds.empty();
 
-    if (hasSelection && keybindings.isPressed(Action::Delete)) {
+    // Don't fire selection-destructive shortcuts (Delete / Duplicate / Trim)
+    // while the user is typing in a text field — Backspace there should edit
+    // the text, not nuke the slice.
+    bool typing = ImGui::GetIO().WantTextInput;
+
+    if (!typing && hasSelection && keybindings.isPressed(Action::Delete)) {
         deleteSelected();
     }
 
-    if (hasSelection && keybindings.isPressed(Action::Duplicate)) {
+    if (!typing && hasSelection && keybindings.isPressed(Action::Duplicate)) {
         duplicateSelected();
     }
 
